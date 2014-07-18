@@ -1,0 +1,14 @@
+# This make file si to be used as the base for the 
+# other projects
+
+CC=g++
+CFLAGS=-ansi -Wall -pedantic
+
+test: main.o
+	$(CC) main.o -o test
+
+main.o: main.cpp
+	$(CC) $(CFLAGS) main.cpp
+
+clean:
+	rm -rf *.o test
