@@ -1,9 +1,21 @@
 #include <iostream>
 
+//lvalue reference
 void overloaded(int const &arg) {
     std::cout << "by lvalue\n";
 }
-void overloaded(int && arg ) {std::cout << "by rvalue\n";}
+
+//rvalue reference
+void overloaded(int && arg) {
+    std::cout << "by rvalue\n";
+}
+
+//universal reference
+template<typename T>
+void overloaded(T && arg) {
+    std::cout << "by universal reference\n";
+}
+
 
 template<typename t>
 void forwarding(t && arg ) {

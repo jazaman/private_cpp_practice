@@ -8,6 +8,24 @@ double my_divide (double x, double y) {return x/y;}
 struct MyPair {
   double a,b;
   double multiply() {return a*b;}
+  double multiply_by(double c) {return a*c;}
+};
+
+struct RunningThread
+{
+    static void runme( RunningThread* rt )
+    {
+        std::cout << "Hello id is:" << rt->id << "\n";
+    }
+
+    RunningThread(int _id)
+    {
+        id = _id;
+    }
+
+    int id;
+
+
 };
 
 int main () {
@@ -35,5 +53,11 @@ int main () {
   auto bound_member_data = std::bind (&MyPair::a,ten_two); // returns ten_two.a
   std::cout << bound_member_data() << '\n';                // 10
 
+  auto bound_member_fn2 = std::bind (&MyPair::multiply_by,ten_two,2); // returns ten_two.a
+  std::cout << bound_member_fn2() << '\n';                // 10
+
+  RunningThread rt(8);
+  auto bound_static_fn = std::bind( &RunningThread::runme, &rt );
+  bound_static_fn();
   return 0;
 }
