@@ -1,18 +1,19 @@
 # This make file si to be used as the base for the 
 # other projects
 
+CC=g++
 CFLAGS=-c -ansi -Wall -Werror -pedantic -std=c++0x
 NO_WARNING=-Wno-unused-variable
+LIBDIR_FLAG=-L
+LIB_DIRS=
 
 
-ifndef $(CC)
-	CC=g++
-else ifeq ($(TOOL),clang)
+ifeq ($(TOOL),clang)
 	CC=clang++
 endif
 
-ifndef LIBS
-	LIBS=
+ifndef $(LIBS)
+	LIBS=''
 endif
 
 ifeq ($(DEBUG),1)
@@ -21,17 +22,12 @@ else
 	DEBUG_FLAG=
 endif
 	
-ifdef LIB_DIR
-        override LIBDIR_FLAG=-L
-else
-	LIBDIR_FLAG=
-endif
 
 objs: *.cpp
-	$(CC) $(CFLAGS) $(DEBUG_FLAG) $(NO_WARNING)  *.cpp
+	$(CC) $(CFLAGS) $(DEBUG_FLAG) $(NO_WARNING) *.cpp
 
 driver:objs
-	$(CC) *.o $(LIBDIR_FLAG)$(LIB_DIR) $(LIBS) -o $@ 
+	$(CC) *.o $(LIBDIR_FLAG)$(LIB_DIRS) $(LIBS) -o $@ 
 
 #objects = metaprogramming.o 
 #all_objs:$(objects)

@@ -59,7 +59,11 @@ int main()
     display(a, mask);
     printf("\n");
     
-    display(0xffe);
+    display(0x105);
+    printf("\n");
+
+    printf("Negative \n");
+    display(-3);
     printf("\n");
     
 
