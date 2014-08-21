@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stdint.h>
+#include <inttypes.h>
 
 
 static inline unsigned maxbit8( uint8_t v )
@@ -28,10 +29,15 @@ static inline unsigned maxbit64( uint64_t v )
 }
 
 
-int main()
+int main(int argc, char* argv[])
 {
     uint64_t mask = 0x1ff01;
+    if( argc > 1)
+    {
     
+        mask = 0;
+        sscanf(argv[1], "%llx", &mask);
+    }
     unsigned test = maxbit64(mask);
     std::cout << test << std::endl;
     

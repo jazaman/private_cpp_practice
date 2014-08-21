@@ -7,7 +7,7 @@ void foo()
   // do stuff...
   for(int i = 0 ; i < 50; i++)
   {
-    std::cout << "This is foo " << std::endl;
+    std::cout << " foo " << std::endl;
   }
 }
 
@@ -16,7 +16,7 @@ void bar(int x)
   // do stuff...
   for(int i = 0 ; i < 50; i++)
   {
-    std::cout << "This is bar" << std::endl;
+    std::cout << " bar " << std::endl;
   }
 }
 

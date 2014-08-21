@@ -3,7 +3,7 @@
 
 CC=g++
 CFLAGS=-c -ansi -Wall -Werror -pedantic -std=c++0x
-NO_WARNING=-Wno-unused-variable
+NO_WARNING=-Wno-unused-variable -Wno-error=format
 
 ifeq ($(DEBUG),1)
 	DEBUG_FLAG=-g
