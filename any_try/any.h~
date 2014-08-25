@@ -1,0 +1,39 @@
+#ifndef _ANY_
+#define _ANY_
+
+
+class Placeholder 
+{
+
+public:
+
+
+};
+
+template<typename T>
+class Holder: Placeholder
+{
+public:
+    Holder(T* _anything)
+      :  anything(_anything)
+    {}
+
+private:
+    T* anything;
+};
+
+
+class Any
+{
+
+public: 
+    template<typename T>
+    Any(T* _holder)
+      : holder( new Holder<T>(_holder))
+    {}
+
+private:
+    Placeholder* holder;
+};
+
+#endif
