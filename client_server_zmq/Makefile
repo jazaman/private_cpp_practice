@@ -3,13 +3,18 @@
 
 CFLAGS=-c -ansi -Wall -Werror -pedantic -std=c++0x
 NO_WARNING=-Wno-unused-variable
+
+ZEROMQ_PREFIX=/usr/local/zeromq-3.2.4
+
+if [ ! -d "./$(ZEROMQ_PREFIX)" ]; then ZEROMQ_PREFIX=/usr/local/zeromq-3.2.2; fi
+
 LIBS=-lzmq
-INCLUDE_DIR=/usr/local/zeromq-3.2.2/include/
+INCLUDE_DIR=$(ZEROMQ_PREFIX)/include/
 INCLUDE_FLAG=-I
 
 LIBRARY_FLAG=-L
 LIBS=-lzmq
-LIB_PATH=-L/usr/local/zeromq-3.2.2/lib/
+LIB_PATH=-L$(ZEROMQ_PREFIX)/lib/
 #/usr/local/boost-1.53.0/lib/
 
 
