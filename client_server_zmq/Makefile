@@ -3,6 +3,15 @@
 
 CFLAGS=-c -ansi -Wall -Werror -pedantic -std=c++0x
 NO_WARNING=-Wno-unused-variable
+LIBS=-lzmq
+INCLUDE_DIR=/usr/local/zeromq-3.2.2/include/
+INCLUDE_FLAG=-I
+
+LIBRARY_FLAG=-L
+LIBS=-lzmq
+LIB_PATH=-L/usr/local/zeromq-3.2.2/lib/
+#/usr/local/boost-1.53.0/lib/
+
 
 
 ifndef $(CC)
@@ -27,11 +36,14 @@ else
 	LIBDIR_FLAG=
 endif
 
-objs: *.cpp
-	$(CC) $(CFLAGS) $(DEBUG_FLAG) $(NO_WARNING)  *.cpp
+%.o: %.cpp 
+	$(CC) $(CFLAGS) $(DEBUG_FLAG) $(NO_WARNING) $(INCLUDE_FLAG)$(INCLUDE_DIR) $< 
 
-driver:objs
-	$(CC) *.o $(LIBDIR_FLAG)$(LIB_DIR) $(LIBS) -o $@ 
+server: zmq_server.o
+	$(CC) $^ $(LIB_PATH) $(LIBS) -o $@ 
+
+client: zmq_client.o
+	$(CC) $^ $(LIB_PATH) $(LIBS) -o $@ 
 
 #objects = metaprogramming.o 
 #all_objs:$(objects)
@@ -39,7 +51,7 @@ driver:objs
 #$(objects): %.o: %.cpp
 #	$(CC) $(CFLAGS) $< -o $@ 
 
-all:driver
+all: server client
 
 clean:
-	rm -rf *.o driver
+	rm -rf *.o server client
