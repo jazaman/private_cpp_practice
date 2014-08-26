@@ -16,7 +16,7 @@ ifndef LIBS
 endif
 
 ifeq ($(DEBUG),1)
-	DEBUG_FLAG=-g -DDEBUG
+	DEBUG_FLAG=-g
 else
 	DEBUG_FLAG=
 endif
