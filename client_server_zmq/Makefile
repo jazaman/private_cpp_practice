@@ -45,6 +45,8 @@ server: zmq_server.o
 client: zmq_client.o
 	$(CC) $^ $(LIB_PATH) $(LIBS) -o $@ 
 
+.PHONY: clean
+
 #objects = metaprogramming.o 
 #all_objs:$(objects)
 
