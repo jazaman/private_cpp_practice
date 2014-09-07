@@ -6,7 +6,7 @@ NO_WARNING=-Wno-unused-variable
 
 ZEROMQ_PREFIX=/usr/local/zeromq-3.2.4
 
-if [ ! -d "./$(ZEROMQ_PREFIX)" ]; then ZEROMQ_PREFIX=/usr/local/zeromq-3.2.2; fi
+if [ ! -d "$(ZEROMQ_PREFIX)" ]; then ZEROMQ_PREFIX=/usr/local/zeromq-3.2.2; fi
 
 LIBS=-lzmq
 INCLUDE_DIR=$(ZEROMQ_PREFIX)/include/
@@ -30,7 +30,7 @@ ifndef LIBS
 endif
 
 ifeq ($(DEBUG),1)
-	DEBUG_FLAG=-g
+	DEBUG_FLAG=-g -DDEBUG
 else
 	DEBUG_FLAG=
 endif
