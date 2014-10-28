@@ -8,7 +8,7 @@
 
 int main()
 {
-    std::cout << "Hello ZMQ!!" << std::endl;
+    std::cout << "Hello ZMQ - CLIENT!!" << std::endl;
     //void* hZmq = 0;
     //if (( hZmq = zmq_ctx_new()) == 0 )
     //{
@@ -27,15 +27,9 @@ int main()
         zmq::message_t request;
 	socket.recv(&request); 
         std::cout << "Received World" << std::endl;
-        sleep(1);
-        
+        sleep(1); 
     }
     
-
-
-
-
-
     //if(zmq_ctx_destroy(hZmq)) //no zero return
     //{
     //    std::cerr << "Failed to cleanly terminate ZMQ context:" << errno  << std::endl;
