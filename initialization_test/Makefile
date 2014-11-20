@@ -1,9 +1,9 @@
 # This make file si to be used as the base for the 
 # other projects
-
+SHELL:= /bin/bash 
 CFLAGS=-c -ansi -Wall -Werror -pedantic -std=c++0x
 NO_WARNING=-Wno-unused-variable
-TARGET=initialization_test
+TARGET=$(shell basename $(shell pwd)) #derive the executable name from hte directory
 
 
 ifndef $(CC)
@@ -31,17 +31,10 @@ endif
 %.o:%.cpp
 	$(CC) $(CFLAGS) $(DEBUG_FLAG) $(NO_WARNING) $< 
 
-initialization_test:%:%.o
+$(TARGET):%:%.o
 	$(CC) $^ $(LIBDIR_FLAG)$(LIB_DIR) $(LIBS) -o $@ 
 
-#objects = metaprogramming.o 
-#all_objs:$(objects)
-
-#$(objects): %.o: %.cpp
-#	$(CC) $(CFLAGS) $< -o $@ 
-
 all:$(TARGET)
-#initialization_test
 
 clean:
-	rm -rf *.o driver
+	rm -rf *.o $(TARGET) 
