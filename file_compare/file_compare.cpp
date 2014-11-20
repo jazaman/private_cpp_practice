@@ -53,5 +53,7 @@ main(int argc, char *argv[])
     printf("Last file modification:   %s", ctime(&sb.st_mtime));
 
     exit(EXIT_SUCCESS);
+    
+    return 0;
 }
 
