@@ -1,11 +1,12 @@
 # This make file si to be used as the base for the 
 # other projects
 
-CFLAGS=-c -ansi -Wall -Werror -pedantic -std=c++0x
-NO_WARNING=-Wno-unused-variable
+CPPFLAGS=-c -ansi -Wall -Werror -pedantic -std=c++0x
+NO_WARNING=-Wno-unused-variable -Wno-unused-local-typedefs
 INCLUDE_DIR=-I/usr/local/boost-1.53.0/include
 LIB_DIR=/usr/local/boost-1.53.0/lib
 LIBS=-lboost_program_options
+TARGET=first options_description 
 
 
 ifndef $(CC)
@@ -32,20 +33,13 @@ endif
 
 #objs: *.cpp
 #	$(CC) $(CFLAGS) $(DEBUG_FLAG) $(NO_WARNING)  *.cpp
-%.o: %.cpp
-	$(CC) $(CFLAGS) $(DEBUG_FLAG) $(NO_WARNING) $(INCLUDE_DIR) $<
+%.o:%.cpp
+	$(CC) $(CPPFLAGS) $(DEBUG_FLAG) $(NO_WARNING) $(INCLUDE_DIR) $<
 
-options_description:options_description.o
+$(TARGET):%:%.o
 	$(CC) $^ $(LIBDIR_FLAG)$(LIB_DIR) $(LIBS) -o $@ 
 
-first:first.o
-	$(CC) $^ $(LIBDIR_FLAG)$(LIB_DIR) $(LIBS) -o $@ 
-
-#objects = metaprogramming.o 
-#all_objs:$(objects)
-
-
-all:first options_description
+all:$(TARGET)
 
 clean:
 	rm -rf *.o driver first options_description

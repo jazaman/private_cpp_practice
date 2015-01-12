@@ -21,7 +21,7 @@ int main(int ac, char* av[])
         po::options_description desc("Allowed options");
         desc.add_options()
             ("help", "produce help message")
-            ("conf", po::value<vector<int>>(), "set configuration level")
+            ("conf", po::value<int>(), "set configuration level")
         ;
 
         po::variables_map vm;        
@@ -34,16 +34,17 @@ int main(int ac, char* av[])
         }
 
         if (vm.count("conf")) {
-//            cout << "conf level was set to " 
- //                << vm["conf"].as<double>() << ".\n";
-            auto confValues = vm["conf"].as<vector<int>>();
-            for( auto i = confValues.begin(); i != confValues.end(); ++i )
+            cout << "conf level was set to " 
+                << vm["conf"].as<int>() << ".\n";
+            auto confValues = vm["conf"].as<int>();
+            /*for( auto i = confValues.begin(); i != confValues.end(); ++i )
             {
                 cout 
                     << *i 
                     << " .";
-            }
-            cout << "\n ";
+		    }*/
+
+            cout << confValues<<"\n ";
         } else {
             cout << "conf level was not set.\n";
         }
