@@ -7,7 +7,7 @@
 #include <signal.h>
 #include <time.h>
 
-int signal_received = 0;
+static int signal_received = 0;
 int sleep_ns = 10; // 1 micro
 
 void signal_handler(int sig)
@@ -64,7 +64,7 @@ void bar(int x)
     pthread_t tid = pthread_self();
     
     CPU_ZERO(&cpuset);
-    CPU_SET(0, &cpuset);
+    CPU_SET(2, &cpuset);
      
     pthread_setaffinity_np(tid, sizeof(cpuset), &cpuset);
     timespec time_val{}; 
