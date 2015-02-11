@@ -40,6 +40,25 @@ struct wrapper {
 
 };
 
+struct Holder {
+
+    int     number;
+    const char*   ptr; 
+
+    Holder() : number (99), ptr("ptr test") {}
+    void manipulate(Holder& data);
+
+};
+
+void Holder::manipulate(Holder& data) 
+{
+    Holder* holder_ptr = &data;
+
+    for( auto *i = &(this->number), *end = &(this[1].number); i != end; i++) {
+        (*i) = *i + 1;
+    }
+}
+
 int main()
 {
     int *p_int = new int[10];
@@ -57,5 +76,10 @@ int main()
     std::shared_ptr<wrapper<int>> ptr_wrapper1 = std::make_shared<wrapper<int>>(99); 
     std::shared_ptr<wrapper<int>> ptr_wrapper2 = ptr_wrapper1;
     ptr_wrapper1->ptr = ptr_wrapper2;
+
+    Holder data1, data2;
+    data1.manipulate(data2);
+    printf("Data1 number = %d, data2 number = %d\n", data1.number, data2.number);
+
     return 0;
 }
