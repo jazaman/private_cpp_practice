@@ -7,10 +7,13 @@ void QuickSort( T array[], int SIZE )
 
     if(SIZE == 1) {
       return;
+    } else {
+      
     }
 
     int pivot = SIZE/2;
-  
+    std::cout << pivot <<" - \n";
+    
     QuickSort(array, pivot);
     //QuickSort(array+pivot, SIZE);
 
@@ -18,30 +21,30 @@ void QuickSort( T array[], int SIZE )
     //sort
     int smaller=0, larger=0;
     for(;array[smaller] < array[pivot] && smaller < pivot;smaller++) {
-      std::cout <<" S=" << smaller 
-                <<" P=" << pivot   
-                <<" Z=" << SIZE
+      std::cout <<" S: " << smaller 
+                <<" P: " << pivot   
+                <<" Z: " << SIZE
                 <<" ["
                 << array[smaller] 
                 << "]"
                 <<std::endl;
     }
 
-    int end;
+   
 
-    for(end = SIZE-1;array[pivot]>array[end] && end>pivot; end--)
+    for(larger = SIZE-1; array[pivot] > array[larger] && larger > pivot; larger--)
     {
-      std::cout <<" B=" << end 
-                <<" P=" << pivot   
-                <<" Z=" << SIZE
+      std::cout <<" B: " << larger
+                <<" P:" << pivot   
+                <<" Z:" << SIZE
                 <<" ["
-                << array[end] 
+                << array[larger] 
                 << "]"
                 <<std::endl;
         
     }
 
-    std::swap(array[smaller], array[end]);
+    std::swap(array[smaller], array[larger]);
 
     //for(;array[smaller] < array[pivot] && smaller <= pivot) {
     //  std::cout <<" - " << array[smaller] <<std::endl;
@@ -62,6 +65,8 @@ int main()
     std::cout << "Hello World!!" << std::endl;
     int unsorted[] = {3,5,1,2,8,6};
     printf("The size of the array is:%lu\n\n", sizeof(unsorted)/sizeof(unsorted[0]));
+    
+    print_array(unsorted, sizeof(unsorted)/sizeof(unsorted[0]));
     QuickSort( unsorted, sizeof(unsorted)/sizeof(unsorted[0]));
     
     print_array(unsorted, sizeof(unsorted)/sizeof(unsorted[0]));
