@@ -19,13 +19,28 @@ template<class T>
 class LinkedList {
 
 public:
+    typedef void (*action)(Node<T>* _node);
+
     LinkedList() : head(0) {}
     Node<T>* get_head() const { return head; }
+
+    void browse(action act) {
+       Node<T> *curr = head; 
+
+       Node<T> * prev = 0;
+       while( curr ) {
+           prev = curr;
+           curr = curr->get_next();
+           act(prev);
+       }
+    }
+    
     void add(T data) {
         Node<T>* node = new Node<T>(data);
         node->set_next(head);
         head = node;
     };
+    
     void remove(T data) {
         Node<T> *prev = 0, *curr = head;
         while( curr  ) {
