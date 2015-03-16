@@ -1,8 +1,13 @@
 #include <iostream>
 
 //lvalue reference
-void overloaded(int const &arg) {
+void overloaded(int &arg) {
     std::cout << "by lvalue\n";
+}
+
+//const lvalue reference
+void overloaded(int const &arg) {
+    std::cout << "by const lvalue\n";
 }
 
 //rvalue reference
@@ -17,10 +22,10 @@ void overloaded(T && arg) {
 }
 
 
-template<typename t>
-void forwarding(t && arg ) {
+template<typename T>
+void forwarding(T && arg ) {
     std::cout << "via std::forward: ";
-    overloaded( std::forward< t >( arg ) );
+    overloaded( std::forward< T >( arg ) );
     std::cout << "via std::move: ";
     overloaded( std::move( arg ) );
     std::cout << "by simple passing: ";
