@@ -1,45 +1,49 @@
 #include <iostream>
 #include <stdio.h>
 
+static int level = 0;
+
 template <typename T>
 void print_array(T (&array), unsigned size)
 {
-  for(auto x = std::begin(array); x != std::end(array); ++x ) {
-    std::cout<< " " << *x << " ";
-  }
-  std::cout << std::endl;
+    for(auto x = std::begin(array); x != std::end(array); ++x ) {
+      std::cout<< " " << *x << " ";
+    }
+    std::cout << std::endl;
 }
 
 void quickSort(int (&arr)[6], int left, int right) {
+      
+    std:cout << "level: " << level << " " ;
 
-      int i = left, j = right; 
-      int tmp; 
-      int pivot = arr[(left + right) / 2]; 
+    int i = left, j = right; 
+    int tmp; 
+    int pivot = arr[(left + right) / 2]; 
 
-      /* partition */ 
-      while (i <= j) { 
-            while (arr[i] < pivot) 
-                  i++;
+    /* partition */ 
+    while (i <= j) { 
+        while (arr[i] < pivot) 
+              i++;
 
-            while (arr[j] > pivot) 
-                  j--;
+        while (arr[j] > pivot) 
+              j--;
 
-            if (i <= j) { 
-                  tmp = arr[i]; 
-                  arr[i] = arr[j]; 
-                  arr[j] = tmp; 
-                  i++; 
-                  j--; 
-            } 
-      }; 
+        if (i <= j) { 
+              tmp = arr[i]; 
+              arr[i] = arr[j]; 
+              arr[j] = tmp; 
+              i++; 
+              j--; 
+        } 
+    }; 
    
-      print_array(arr, right+1);
+    print_array(arr, right+1);
 
-      /* recursion */ 
-      if (left < j)
-            quickSort(arr, left, j); 
-      if (i < right) 
-            quickSort(arr, i, right);
+    /* recursion */ 
+    if (left < j)
+        quickSort(arr, left, j); 
+    if (i < right) 
+        quickSort(arr, i, right);
 
 }
 
@@ -100,7 +104,8 @@ int main()
 {
     std::cout << "Hello World!!" << std::endl;
     int unsorted[] = {3,5,2,1,8,6};
-    printf("The size of the array is:%lu\n\n", sizeof(unsorted)/sizeof(unsorted[0]));
+    printf("The size of the array is:%lu\n\n", 
+        sizeof(unsorted)/sizeof(unsorted[0]));
     
     print_array(unsorted, sizeof(unsorted)/sizeof(unsorted[0]));
     quickSort( unsorted, 0, sizeof(unsorted)/sizeof(unsorted[0])-1);
