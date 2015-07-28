@@ -26,9 +26,11 @@ int main()
     list.remove(1);
     print_list(list);   
     
-    auto lamda = [] (Node<int>* node) { printf("%d ", node->data());   
-   
+    auto lamda = [] (Node<int>* node) { printf("%d ", node->data());} ;  
+    
+    list.browse( lamda );
  
     std::cout << "Hello World!!" << std::endl;
     return 0;
 }
+
