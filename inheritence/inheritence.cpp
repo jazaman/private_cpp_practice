@@ -2,8 +2,10 @@
 
 using namespace std;
 
-struct A      { virtual ~A() { }
-                 virtual string Name() { return "A";  } };
+struct A { 
+    virtual ~A() {}
+    virtual string Name() { return "A";  } 
+};
 struct B1 : virtual A { string Name() { return "B1"; } };
 struct B2 : virtual A { string Name() { return "B2"; } };
 
