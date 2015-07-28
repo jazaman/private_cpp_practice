@@ -6,7 +6,8 @@ NO_WARNING=-Wno-unused-variable
 
 ZEROMQ_PREFIX=/usr/local/zeromq-3.2.4
 
-if [ ! -d "$(ZEROMQ_PREFIX)" ]; then ZEROMQ_PREFIX=/usr/local/zeromq-3.2.2; fi
+#if [! -d "$(ZEROMQ_PREFIX)"];then ZEROMQ_PREFIX=/usr;
+#fi
 
 LIBS=-lzmq
 INCLUDE_DIR=$(ZEROMQ_PREFIX)/include/
@@ -16,8 +17,6 @@ LIBRARY_FLAG=-L
 LIBS=-lzmq
 LIB_PATH=-L$(ZEROMQ_PREFIX)/lib/
 #/usr/local/boost-1.53.0/lib/
-
-
 
 ifndef $(CC)
 	CC=g++
