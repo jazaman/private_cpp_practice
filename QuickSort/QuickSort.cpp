@@ -14,11 +14,7 @@ void print_array(T (&array), unsigned size)
 
 void quickSort(int (&arr)[6], int left, int right) {
       
-<<<<<<< HEAD
-    std::cout << "level: " << level << " " ;
-=======
-    std::cout << "level: " << level++ << " " ;
->>>>>>> origin/master
+    std::cout << "level:[" << level++ << "]` " ;
 
     int i = left, j = right; 
     int tmp; 
