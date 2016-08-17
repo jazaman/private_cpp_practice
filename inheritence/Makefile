@@ -5,6 +5,10 @@ CFLAGS=-c -ansi -Wall -Werror -pedantic -std=c++0x
 NO_WARNING=-Wno-unused-variable
 TARGET=$(shell basename $(shell pwd)) #derive the executable name from hte directory
 
+ifneq ($@, "")
+	TARGET=$@
+	#@echo $TARGET
+endif
 
 ifndef $(CC)
 	CC=g++
