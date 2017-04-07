@@ -24,7 +24,7 @@ int main()
         zmq::message_t request;
 	socket.recv(&request); 
         std::cout << "Received Hello " << std::endl;
-        sleep(1);
+        //sleep(1);
         zmq::message_t reply(5);
         memcpy((void*) reply.data(), "World", 5);
         socket.send(reply); 

@@ -27,7 +27,7 @@ int main()
         zmq::message_t request;
 	socket.recv(&request); 
         std::cout << "Received World" << std::endl;
-        sleep(1); 
+        //sleep(1); 
     }
     
     //if(zmq_ctx_destroy(hZmq)) //no zero return
