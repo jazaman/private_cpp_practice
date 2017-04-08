@@ -24,3 +24,7 @@
 *.app
 driver
 /Debug/
+
+#eclipse project file
+.project
+.cproject
