@@ -40,13 +40,15 @@ else
 	LIBDIR_FLAG=
 endif
 
+OBJECTS := fileprocessor.o
+
 %.o: %.cpp 
 	$(CC) $(CFLAGS) $(DEBUG_FLAG) $(NO_WARNING) $(INCLUDE_FLAG)$(INCLUDE_DIR) $< 
 
-server: zmq_server.o
+server: zmq_server.o $(OBJECTS)
 	$(CC) $^ $(LIB_PATH) $(LIBS) -o $@ 
 
-client: zmq_client.o
+client: zmq_client.o $(OBJECTS)
 	$(CC) $^ $(LIB_PATH) $(LIBS) -o $@ 
 
 .PHONY: clean

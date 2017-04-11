@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdio.h>
 #include <zmq.hpp>
 #include <error.h>
 
@@ -19,14 +20,22 @@ int main()
     zmq::socket_t socket(zmq_ctx, ZMQ_REP);
     socket.bind("tcp://*:5555");
 
+    int i = 0;
+
+    char resp[8]={0};
+
     while(true)
     {
         zmq::message_t request;
-	socket.recv(&request); 
+	    socket.recv(&request);
         std::cout << "Received Hello " << std::endl;
         //sleep(1);
-        zmq::message_t reply(5);
-        memcpy((void*) reply.data(), "World", 5);
+        zmq::message_t reply(8);
+
+        sprintf(resp, "%s %2d", "world", ++i);
+
+        memcpy((void*) reply.data(), resp, 8);
+        //memcpy((void*) reply.data(), World, 5);
         socket.send(reply); 
     }
     
