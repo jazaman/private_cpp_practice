@@ -28,3 +28,4 @@ driver
 #eclipse project file
 .project
 .cproject
+.settings/
