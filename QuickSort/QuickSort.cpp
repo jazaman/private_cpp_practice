@@ -12,7 +12,7 @@ void print_array(T (&array))
     std::cout << std::endl;
 }
 
-void quickSort(int (&arr)[7], int left, int right) {
+void quickSort(int (&arr)[8], int left, int right) {
 #ifdef DEBUG
     std::cout << "Recursion level:[" << level++ << "] left::" << left << " right::" << right;
 #endif
@@ -52,7 +52,7 @@ void quickSort(int (&arr)[7], int left, int right) {
         std::cout << "array[] = ";
         print_array(arr);
         std::cout << std::endl;
-    };
+    }
 
     /* recursion */ 
     if (left < j)
@@ -122,7 +122,7 @@ void QuickSort( T (&array), int start, int end )
 
 int main() {
     std::cout << "Hello World!!" << std::endl;
-    int unsorted[] = {3,0,-1,-2,7,9,4};
+    int unsorted[] = {-1,4, 17,3,9,10, 11,13};
     printf("The size of the array is:%lu\n\n", 
         sizeof(unsorted)/sizeof(unsorted[0]));
     std::cout << "array[] = ";
