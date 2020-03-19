@@ -3,6 +3,7 @@
 SHELL:= /bin/bash 
 CFLAGS=-c -ansi -Wall -Werror -pedantic -std=c++0x
 NO_WARNING=-Wno-unused-variable
+LIBS=-lsqlite3
 TARGET=$(shell basename $(shell pwd)) #derive the executable name from hte directory
 
 
