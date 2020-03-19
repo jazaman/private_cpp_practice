@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
    const char* data = "Callback function called";
 
    /* Open database */
-   rc = sqlite3_open("sqlite3 rhis_fwc.sqlite3", &db);
+   rc = sqlite3_open("rhis_fwc.sqlite3", &db);
    
    if( rc ) {
       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
@@ -36,10 +36,20 @@ int main(int argc, char* argv[]) {
 
    /* Create SQL statement */
    //sql = "select sql from sqlite_master where name = 'member';";
-   sql = "SELECT * FROM 'MEMBER';";
+   sql = "SELECT unionid, count(*) as member FROM MEMBER group by unionid;";
 
    /* Execute SQL statement */
    rc = sqlite3_exec(db, sql.c_str(), callback, (void*)data, &zErrMsg);
+   /* Create SQL statement */
+      sql = "CREATE TABLE COMPANY("  \
+         "ID INT PRIMARY KEY     NOT NULL," \
+         "NAME           TEXT    NOT NULL," \
+         "AGE            INT     NOT NULL," \
+         "ADDRESS        CHAR(50)," \
+         "SALARY         REAL );";
+
+      /* Execute SQL statement */
+      //rc = sqlite3_exec(db, sql.c_str(), callback, 0, &zErrMsg);
    
    if( rc != SQLITE_OK ) {
       fprintf(stderr, "SQL error: %s\n", zErrMsg);
