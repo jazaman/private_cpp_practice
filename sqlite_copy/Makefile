@@ -3,7 +3,7 @@
 SHELL:= /bin/bash 
 CFLAGS=-c -ansi -Wall -Werror -pedantic -std=c++0x
 NO_WARNING=-Wno-unused-variable
-LIBS=-lsqlite3
+LIBS=-lsqlite3 -lpqxx
 TARGET=$(shell basename $(shell pwd)) #derive the executable name from hte directory
 
 
@@ -31,8 +31,13 @@ endif
 
 %.o:%.cpp
 	$(CC) $(CFLAGS) $(DEBUG_FLAG) $(NO_WARNING) $< 
+	
+SOURCE := $(wildcard *.cpp)
+OBJS := $(patsubst %.cpp,%.o,$(wildcard *.cpp))
 
-$(TARGET):%:%.o
+#$(SOURCE:.cpp=.o): SOURCE
+#	$(CC) $(CFLAGS) $(DEBUG_FLAG) $(NO_WARNING) $<
+$(TARGET):$(OBJS)
 	$(CC) $^ $(LIBDIR_FLAG)$(LIB_DIR) $(LIBS) -o $@ 
 
 all:$(TARGET)

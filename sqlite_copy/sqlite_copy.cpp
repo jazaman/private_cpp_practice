@@ -3,6 +3,8 @@
 #include <sqlite3.h> 
 #include <string>
 
+#include "pg_handler.h"
+
 static int callback(void *data, int argc, char **argv, char **azColName){
    int i;
    fprintf(stderr, "%s: ", (const char*)data);
@@ -58,5 +60,11 @@ int main(int argc, char* argv[]) {
       fprintf(stdout, "Operation done successfully\n");
    }
    sqlite3_close(db);
+
+   //handle pg
+   //create_table (argc, argv);
+   //insert data
+   //insert_data(argc, argv);
+   select_data(argc, argv);
    return 0;
 }
