@@ -65,6 +65,7 @@ int main(int argc, char* argv[]) {
    //create_table (argc, argv);
    //insert data
    //insert_data(argc, argv);
-   select_data(argc, argv);
+   std::vector<std::string> column_name, result_values;
+   select_data(column_name, result_values);
    return 0;
 }
