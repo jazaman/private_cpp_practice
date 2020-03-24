@@ -4,7 +4,7 @@
  *  Created on: Mar 20, 2020
  *      Author: jamil.zaman
  */
-
+#include "pg_handler.h"
 #include <iostream>
 #include <string>
 #include <pqxx/pqxx>
@@ -109,11 +109,15 @@ int insert_data(int argc, char* argv[]) {
     return 0;
 }
 
-int select_data(std::vector<std::string>& column_names, std::vector<std::string>& result_values) {
+int select_data(
+        const std::string& db_name,
+        const std::string& table_name,
+        std::vector<std::string>& column_names,
+        std::vector<std::string>& result_values) {
     std::string sql;
 
     try {
-        connection C("dbname = test_db user = postgres password = postgres \
+        connection C("dbname = "+ db_name +" user = postgres password = postgres \
       hostaddr = 127.0.0.1 port = 9432");
         if (C.is_open()) {
             cout << "Opened database successfully: " << C.dbname() << endl;
@@ -123,7 +127,7 @@ int select_data(std::vector<std::string>& column_names, std::vector<std::string>
         }
 
         /* Create SQL statement */
-        sql = "SELECT * from COMPANY";
+        sql = "SELECT * from " + table_name + " limit NULL";
 
         /* Create a non-transactional object. */
         nontransaction N(C);
@@ -131,7 +135,7 @@ int select_data(std::vector<std::string>& column_names, std::vector<std::string>
         /* Execute SQL query */
         result R( N.exec( sql ));
 
-        std::vector<std::string> column_names;
+        //std::vector<std::string> column_names;
         std::vector<std::string> column_values;
 
         for(size_t i = 0; i < R.columns(); i++) {
@@ -153,21 +157,25 @@ int select_data(std::vector<std::string>& column_names, std::vector<std::string>
 
         for (result::const_iterator c = R.begin(); c != R.end(); ++c) {
             for(auto name:column_names) {
+#ifdef DEBUG
                 cout << name<<": " << c[name] << " db type: " << c[name].type() \
                      << " cpp type: "<< demangle(typeid(c[name]).name())<< endl;
+#endif
                 result_holder.append("'"+ std::string(c[name].c_str())+ "', ");
             }
             result_holder.erase(result_holder.find_last_of(","));
+#ifdef DEBUG
             std::cout << "imploded result: " << result_holder << std::endl;
-            column_values.push_back(result_holder);
+#endif
+            result_values.push_back(result_holder);
             result_holder = "";
         }
 
-
-
+#ifdef DEBUG
         for(auto values:result_holder) {
             std::cout << "-> " << values <<std::endl;
         }
+#endif
 
         /*std::ostringstream imploded_values;
         for (result::const_iterator c = R.begin(); c != R.end(); ++c) {

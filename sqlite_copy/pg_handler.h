@@ -12,7 +12,11 @@
 
 int create_table (int argc, char* argv[]);
 int insert_data(int argc, char* argv[]);
-int select_data(std::vector<std::string>& column_names, std::vector<std::string>& result);
+int select_data(
+        const std::string& db_name,
+        const std::string& table_name,
+        std::vector<std::string>& column_names,
+        std::vector<std::string>& result_values);
 
 
 
