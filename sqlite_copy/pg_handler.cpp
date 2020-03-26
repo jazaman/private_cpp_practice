@@ -39,7 +39,7 @@ int create_table (int argc, char* argv[]) {
 
     try {
         connection C("dbname = test_db user = postgres password = postgres \
-	      hostaddr = 127.0.0.1 port = 9432");
+	      hostaddr = 127.0.0.1 port = 5432");
         if (C.is_open()) {
             cout << "Opened database successfully: " << C.dbname() << endl;
         } else {
@@ -75,7 +75,7 @@ int insert_data(int argc, char* argv[]) {
 
     try {
         connection C("dbname = test_db user = postgres password = postgres \
-	   	      hostaddr = 127.0.0.1 port = 9432");
+	   	      hostaddr = 127.0.0.1 port = 5432");
         if (C.is_open()) {
             cout << "Opened database successfully: " << C.dbname() << endl;
         } else {
@@ -118,7 +118,7 @@ int select_data(
 
     try {
         connection C("dbname = "+ db_name +" user = postgres password = postgres \
-      hostaddr = 127.0.0.1 port = 9432");
+      hostaddr = 127.0.0.1 port = 5432");
         if (C.is_open()) {
             cout << "Opened database successfully: " << C.dbname() << endl;
         } else {
@@ -136,7 +136,7 @@ int select_data(
         result R( N.exec( sql ));
 
         //std::vector<std::string> column_names;
-        std::vector<std::string> column_values;
+        //std::vector<std::string> column_values;
 
         for(size_t i = 0; i < R.columns(); i++) {
             //std::cout << "Column: \'" << R.column_name(i) <<"\' "<<std::endl;
@@ -172,7 +172,7 @@ int select_data(
         }
 
 #ifdef DEBUG
-        for(auto values:result_holder) {
+        for(auto values:result_values) {
             std::cout << "-> " << values <<std::endl;
         }
 #endif

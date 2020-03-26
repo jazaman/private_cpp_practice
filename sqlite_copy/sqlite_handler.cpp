@@ -68,7 +68,9 @@ int create_table (const std::string& sq_database) {
                 "SALARY         REAL );";
 
         /* Execute SQL statement */
+        rc = sqlite3_exec(db, "BEGIN TRANSACTION", 0, 0, 0);
         rc = sqlite3_exec(db, sql.c_str(), callback, 0, &zErrMsg);
+        rc = sqlite3_exec(db, "END TRANSACTION", 0, 0, 0);
 
         if( rc != SQLITE_OK ) {
             fprintf(stderr, "SQL error: %s\n", zErrMsg);
