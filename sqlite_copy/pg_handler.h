@@ -10,14 +10,17 @@
 #include <vector>
 #include <string>
 
+class pg_handler {
+
+public:
 int create_table (int argc, char* argv[]);
 int insert_data(int argc, char* argv[]);
 int select_data(
         const std::string& db_name,
         const std::string& table_name,
+        const std::string& provider_id,
         std::vector<std::string>& column_names,
         std::vector<std::string>& result_values);
 
-
-
+};
 #endif /* SQLITE_COPY_PG_HANDLER_H_ */

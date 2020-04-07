@@ -34,7 +34,7 @@ using namespace std;
 using namespace pqxx;
 //template <typename T> std::string type_name();
 
-int create_table (int argc, char* argv[]) {
+int pg_handler::create_table (int argc, char* argv[]) {
     std::string sql;
 
     try {
@@ -70,7 +70,7 @@ int create_table (int argc, char* argv[]) {
     return 0;
 }
 
-int insert_data(int argc, char* argv[]) {
+int pg_handler::insert_data(int argc, char* argv[]) {
     std::string sql;
 
     try {
@@ -109,16 +109,17 @@ int insert_data(int argc, char* argv[]) {
     return 0;
 }
 
-int select_data(
+int pg_handler::select_data(
         const std::string& db_name,
         const std::string& table_name,
+        const std::string& provider_id,
         std::vector<std::string>& column_names,
         std::vector<std::string>& result_values) {
     std::string sql;
 
     try {
         connection C("dbname = "+ db_name +" user = postgres password = postgres \
-      hostaddr = 127.0.0.1 port = 5432");
+      hostaddr = 127.0.0.1 port = 9432");
         if (C.is_open()) {
             cout << "Opened database successfully: " << C.dbname() << endl;
         } else {
@@ -127,8 +128,18 @@ int select_data(
         }
 
         /* Create SQL statement */
-        sql = "SELECT * from " + table_name + " limit NULL";
-
+        //sql = "SELECT * from " + table_name + " limit NULL";
+        sql = "with pd as (select zillaid, upazilaid, unionid from providerdb \
+               where providerid = " + provider_id + ") select selection_table.* from " +
+               table_name +" as selection_table inner join clientmap cm \
+               on selection_table.healthid = cm.generatedid left join pd \
+               using(zillaid, upazilaid, unionid) \
+               where selection_table.providerid = " + provider_id + " OR " +
+               "(cm.zillaid = pd.zillaid and cm.upazilaid = pd.upazilaid \
+               and cm.unionid = pd.unionid )";
+//#ifdef DEBUG
+        std::cout << "SELECT QUERY:\n" << sql << std::endl;
+//#endif
         /* Create a non-transactional object. */
         nontransaction N(C);
 
@@ -151,8 +162,9 @@ int select_data(
 
         std::string columns = imploded.str();
         columns.erase(columns.find_last_of(","));
+#ifdef DEBUG
         std::cout << "COLUMNS:: " << columns << std::endl;
-
+#endif
         std::string result_holder = "";
 
         for (result::const_iterator c = R.begin(); c != R.end(); ++c) {
@@ -185,6 +197,7 @@ int select_data(
         cout << "Operation done successfully" << endl;
         C.disconnect ();
     } catch (const std::exception &e) {
+        cerr <<"SQL:\n" << sql << endl;
         cerr << e.what() << std::endl;
         return 1;
     }
