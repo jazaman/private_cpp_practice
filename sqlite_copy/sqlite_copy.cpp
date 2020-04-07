@@ -29,6 +29,7 @@ static void show_usage(std::string name)
             << "\t-h,--help\t\tShow this help message\n"
             << "\t-d,--database SERVER-DATABASE\tSpecify the PostgreSQL Database"
             << "\t-s,--sqlite SQLITE-DATABASE\tSpecify the SQLITE Database"
+            << "\t-p,--provider PROVIDER_ID\tSpecify the provider_id"
             << std::endl;
 }
 
@@ -38,15 +39,18 @@ int main(int argc, char* argv[]) {
     int rc;
     std::string sql;
     const char* data = "Callback function called";
+    pg_handler pg;
+    sqlite_handler sq;
 
     //parse the command line options
-    if (argc < 5) {
+    if (argc < 6) {
         show_usage(argv[0]);
         return 1;
     }
     std::vector <std::string> sources;
     std::string pg_database;
     std::string sq_database;
+    std::string provider_id;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -68,12 +72,22 @@ int main(int argc, char* argv[]) {
                 std::cerr << "--database option requires one argument." << std::endl;
                 return 1;
             }
+        } else if ((arg == "-p") || (arg == "--provider")) {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+                provider_id = argv[++i]; // Increment 'i' so we don't get the argument as the next argv[i].
+            } else { // Uh-oh, there was no argument to the destination option.
+                std::cerr << "--database option requires one argument." << std::endl;
+                return 1;
+            }
         } else {
             sources.push_back(argv[i]);
         }
     }
 
-    std::cout <<"PG-DB:: " << pg_database << " SQLITE-DB:: " << sq_database <<std::endl;
+    std::cout <<"PG-DB:: " << pg_database
+              << "\nSQLITE-DB:: " << sq_database
+              << "\nPROVIDER:: " << provider_id
+              << std::endl;
 
     /* Open database */
     rc = sqlite3_open(sq_database.c_str(), &db);
@@ -95,14 +109,14 @@ int main(int argc, char* argv[]) {
     //create_table (argc, argv);
     //insert data
     //insert_data(argc, argv);
-    std::string table_name = (argc == 6 ? argv[5]:"ancservice");
+    std::string table_name = (argc == 8 ? argv[7]:"ancservice");
     clock_t t = clock();
     std::vector<std::string> column_names, result_values;
-    select_data(pg_database, table_name,  column_names, result_values);
+    pg.select_data(pg_database, table_name, provider_id, column_names, result_values);
     //sqlite_handler::create_table(sq_database);
-    sqlite_handler::insert_data(sq_database, table_name, column_names, result_values);
+    sq.insert_data(sq_database, table_name, column_names, result_values);
     t = clock() - t;
-    std::cout <<"TABLE \'" << table_name << "\' took " << t <<" ticks and " \
+    std::cout <<"\nTABLE '" << table_name << "' took " << t <<" ticks and " \
                << (((float)t)/CLOCKS_PER_SEC) << " seconds" << std::endl;
     return 0;
 }
