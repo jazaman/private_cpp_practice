@@ -32,7 +32,7 @@ endif
 %.o:%.cpp
 	$(CC) $(CFLAGS) $(DEBUG_FLAG) $(NO_WARNING) $< 
 	
-SOURCE := $(wildcard *.cpp)
+#SOURCE := $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp,%.o,$(wildcard *.cpp))
 
 #$(SOURCE:.cpp=.o): SOURCE

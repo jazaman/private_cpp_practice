@@ -31,14 +31,14 @@ std::string demangle(const char* name) {
 }
 
 using namespace std;
-using namespace pqxx;
+//using namespace pqxx;
 //template <typename T> std::string type_name();
 
 int pg_handler::create_table (int argc, char* argv[]) {
     std::string sql;
 
     try {
-        connection C("dbname = test_db user = postgres password = postgres \
+        pqxx::connection C("dbname = test_db user = postgres password = postgres \
 	      hostaddr = 127.0.0.1 port = 5432");
         if (C.is_open()) {
             cout << "Opened database successfully: " << C.dbname() << endl;
@@ -56,7 +56,7 @@ int pg_handler::create_table (int argc, char* argv[]) {
                 "SALARY         REAL );";
 
         /* Create a transactional object. */
-        work W(C);
+        pqxx::work W(C);
 
         /* Execute SQL query */
         W.exec( sql.c_str() );
@@ -74,10 +74,10 @@ int pg_handler::insert_data(int argc, char* argv[]) {
     std::string sql;
 
     try {
-        connection C("dbname = test_db user = postgres password = postgres \
+        pqxx::connection conn("dbname = test_db user = postgres password = postgres \
 	   	      hostaddr = 127.0.0.1 port = 5432");
-        if (C.is_open()) {
-            cout << "Opened database successfully: " << C.dbname() << endl;
+        if (conn.is_open()) {
+            cout << "Opened database successfully: " << conn.dbname() << endl;
         } else {
             cout << "Can't open database" << endl;
             return 1;
@@ -94,13 +94,12 @@ int pg_handler::insert_data(int argc, char* argv[]) {
                 "VALUES (4, 'Mark', 25, 'Rich-Mond ', 65000.00 );";
 
         /* Create a transactional object. */
-        work W(C);
-
+        pqxx::work W(conn);
         /* Execute SQL query */
         W.exec( sql.c_str() );
         W.commit();
         cout << "Records created successfully" << endl;
-        C.disconnect ();
+        conn.disconnect ();
     } catch (const std::exception &e) {
         cerr << e.what() << std::endl;
         return 1;
@@ -118,10 +117,10 @@ int pg_handler::select_data(
     std::string sql;
 
     try {
-        connection C("dbname = "+ db_name +" user = postgres password = postgres \
+        pqxx::connection conn("dbname = "+ db_name +" user = postgres password = postgres \
       hostaddr = 127.0.0.1 port = 9432");
-        if (C.is_open()) {
-            cout << "Opened database successfully: " << C.dbname() << endl;
+        if (conn.is_open()) {
+            cout << "Opened database successfully: " << conn.dbname()<< " for table: " << table_name << endl;
         } else {
             cout << "Can't open database" << endl;
             return 1;
@@ -129,23 +128,34 @@ int pg_handler::select_data(
 
         /* Create SQL statement */
         //sql = "SELECT * from " + table_name + " limit NULL";
-        sql = "with pd as (select zillaid, upazilaid, unionid from providerdb \
+        /*sql = "with pd as (select zillaid, upazilaid, unionid from providerdb \
                where providerid = " + provider_id + ") select selection_table.* from " +
                table_name +" as selection_table inner join clientmap cm \
                on selection_table.healthid = cm.generatedid left join pd \
                using(zillaid, upazilaid, unionid) \
                where selection_table.providerid = " + provider_id + " OR " +
                "(cm.zillaid = pd.zillaid and cm.upazilaid = pd.upazilaid \
-               and cm.unionid = pd.unionid )";
+               and cm.unionid = pd.unionid )";*/
+        sql = query.get_query(table_name);
+
 //#ifdef DEBUG
         std::cout << "SELECT QUERY:\n" << sql << std::endl;
 //#endif
         /* Create a non-transactional object. */
-        nontransaction N(C);
-
+        //pqxx::nontransaction N(conn);
+        pqxx::work W(conn);
+        conn.prepare("query", sql.c_str());
+        /*"with pd as (select zillaid, upazilaid, unionid from providerdb \
+                        where providerid = $1) select selection_table.* from $2 as selection_table inner join clientmap cm \
+                        on selection_table.healthid = cm.generatedid left join pd \
+                        using(zillaid, upazilaid, unionid) \
+                        where selection_table.providerid = $3 OR \
+                        (cm.zillaid = pd.zillaid and cm.upazilaid = pd.upazilaid \
+                        and cm.unionid = pd.unionid )"*/
         /* Execute SQL query */
-        result R( N.exec( sql ));
+        //pqxx::result R( N.exec( sql ));
 
+        pqxx::result R = W.prepared("query")(provider_id).exec();
         //std::vector<std::string> column_names;
         //std::vector<std::string> column_values;
 
@@ -167,7 +177,7 @@ int pg_handler::select_data(
 #endif
         std::string result_holder = "";
 
-        for (result::const_iterator c = R.begin(); c != R.end(); ++c) {
+        for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c) {
             for(auto name:column_names) {
 #ifdef DEBUG
                 cout << name<<": " << c[name] << " db type: " << c[name].type() \
@@ -195,9 +205,9 @@ int pg_handler::select_data(
         }*/
 
         cout << "Operation done successfully" << endl;
-        C.disconnect ();
+        conn.disconnect ();
     } catch (const std::exception &e) {
-        cerr <<"SQL:\n" << sql << endl;
+        cerr <<"ERROR OCCURRED FOR SQL:\n" << sql << endl;
         cerr << e.what() << std::endl;
         return 1;
     }

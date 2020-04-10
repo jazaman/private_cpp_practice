@@ -109,7 +109,7 @@ int sqlite_handler::insert_data(
             fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
             return(0);
         } else {
-            fprintf(stdout, "SQLITE INSERT:: database '%s' opened\n", sq_database.c_str());
+            fprintf(stdout, "SQLITE INSERT:: database:'%s' table:'%s'\n", sq_database.c_str(), sq_table.c_str());
         }
 
         for(auto rows = data.begin();rows != data.end();) {
@@ -132,11 +132,14 @@ int sqlite_handler::insert_data(
                     fprintf(stderr, "SQL error: %s\n", zErrMsg);
                     sqlite3_free(zErrMsg);
                 } else {
+#ifdef DEBUG
                     fprintf(stdout, "SQLITE INSERT: %d Records created successfully\n", row_count);
+#endif
                 }
                 sql = "";
             }
         }
+        fprintf(stdout, "SQLITE INSERT: Total %d Records created successfully for '%s' table\n", row_count, sq_table.c_str());
 
 #ifdef DEBUG
         std::cout <<"INSERT SQL: " << sql << std::endl;

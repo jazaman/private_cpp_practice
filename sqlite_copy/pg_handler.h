@@ -9,6 +9,7 @@
 #define SQLITE_COPY_PG_HANDLER_H_
 #include <vector>
 #include <string>
+#include "query_builder.h"
 
 class pg_handler {
 
@@ -21,6 +22,9 @@ int select_data(
         const std::string& provider_id,
         std::vector<std::string>& column_names,
         std::vector<std::string>& result_values);
+
+private:
+    query_builder query;
 
 };
 #endif /* SQLITE_COPY_PG_HANDLER_H_ */

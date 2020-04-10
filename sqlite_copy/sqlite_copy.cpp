@@ -3,10 +3,13 @@
 #include <stdlib.h>
 #include <sqlite3.h> 
 #include <string>
+#include <map>
 #include <time.h>
 
 #include "pg_handler.h"
 #include "sqlite_handler.h"
+#include "query_builder.h"
+
 /*
 static int callback(void *data, int argc, char **argv, char **azColName) {
     int i;
@@ -109,14 +112,30 @@ int main(int argc, char* argv[]) {
     //create_table (argc, argv);
     //insert data
     //insert_data(argc, argv);
-    std::string table_name = (argc == 8 ? argv[7]:"ancservice");
-    clock_t t = clock();
+    //std::string table_name = (argc == 8 ? argv[7]:"ancservice");
+    clock_t t, final = clock();
     std::vector<std::string> column_names, result_values;
-    pg.select_data(pg_database, table_name, provider_id, column_names, result_values);
-    //sqlite_handler::create_table(sq_database);
-    sq.insert_data(sq_database, table_name, column_names, result_values);
-    t = clock() - t;
-    std::cout <<"\nTABLE '" << table_name << "' took " << t <<" ticks and " \
-               << (((float)t)/CLOCKS_PER_SEC) << " seconds" << std::endl;
+    query_builder queries;
+    //auto tables = queries.get_query_map();
+    int i = 0;
+    std::string table_name = "";
+    for(auto it:queries.get_query_map()) {
+        t = clock();
+        table_name = it.first;
+        pg.select_data(pg_database, table_name, provider_id, column_names, result_values);
+        //sqlite_handler::create_table(sq_database);
+        sq.insert_data(sq_database, table_name, column_names, result_values);
+        t = clock() - t;
+        std::cout <<"\nTABLE '" << table_name << "' took " << t <<" ticks and " \
+                << (((float)t)/CLOCKS_PER_SEC) << " seconds" << std::endl;
+
+        result_values.clear();
+        column_names.clear();
+        //if(i++> 3) break;
+    }
+
+    final = clock() - final;
+    std::cout <<"\nTHE DATA LOADING TOOK " << final <<" ticks and " \
+                    << (((float)final)/CLOCKS_PER_SEC) << " seconds" << std::endl;
     return 0;
 }
