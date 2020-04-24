@@ -126,16 +126,7 @@ int pg_handler::select_data(
             return 1;
         }
 
-        /* Create SQL statement */
-        //sql = "SELECT * from " + table_name + " limit NULL";
-        /*sql = "with pd as (select zillaid, upazilaid, unionid from providerdb \
-               where providerid = " + provider_id + ") select selection_table.* from " +
-               table_name +" as selection_table inner join clientmap cm \
-               on selection_table.healthid = cm.generatedid left join pd \
-               using(zillaid, upazilaid, unionid) \
-               where selection_table.providerid = " + provider_id + " OR " +
-               "(cm.zillaid = pd.zillaid and cm.upazilaid = pd.upazilaid \
-               and cm.unionid = pd.unionid )";*/
+        /* Get SQL statement */
         sql = query.get_query(table_name);
 
 //#ifdef DEBUG
@@ -145,19 +136,9 @@ int pg_handler::select_data(
         //pqxx::nontransaction N(conn);
         pqxx::work W(conn);
         conn.prepare("query", sql.c_str());
-        /*"with pd as (select zillaid, upazilaid, unionid from providerdb \
-                        where providerid = $1) select selection_table.* from $2 as selection_table inner join clientmap cm \
-                        on selection_table.healthid = cm.generatedid left join pd \
-                        using(zillaid, upazilaid, unionid) \
-                        where selection_table.providerid = $3 OR \
-                        (cm.zillaid = pd.zillaid and cm.upazilaid = pd.upazilaid \
-                        and cm.unionid = pd.unionid )"*/
         /* Execute SQL query */
         //pqxx::result R( N.exec( sql ));
-
         pqxx::result R = W.prepared("query")(provider_id).exec();
-        //std::vector<std::string> column_names;
-        //std::vector<std::string> column_values;
 
         for(size_t i = 0; i < R.columns(); i++) {
             //std::cout << "Column: \'" << R.column_name(i) <<"\' "<<std::endl;

@@ -16,7 +16,6 @@ query_builder::query_builder()
         {std::string("pncservicemother"), service_query},
         {std::string("pncservicechild"), service_query},
         {std::string("pacservice"), service_query},
-        {std::string("fpinfo"), service_query},
         {std::string("elco"), service_query},
         {std::string("fpinfo"), service_query},
         {std::string("fpexamination"), service_query},
@@ -30,6 +29,7 @@ query_builder::query_builder()
         {std::string("gpservice"), service_query},
         {std::string("death"), service_query},
         {std::string("clientmap"), clientmap_query},
+        {std::string("member"), member_query},
     }
 {}
 
