@@ -1,11 +1,12 @@
 # This make file si to be used as the base for the 
 # other projects
 SHELL:= /bin/bash 
-CFLAGS=-c -ansi -Wall -Werror -pedantic -std=c++0x
+CFLAGS=-c -ansi -Wall -Werror -pedantic
 NO_WARNING=-Wno-unused-variable
 LIBS=
 TARGET=$(shell basename $(shell pwd)) #derive the executable name from hte directory
-
+CLIENT=client
+SERVER=server
 
 ifndef $(CC)
 	CC=g++
@@ -34,13 +35,19 @@ endif
 	
 #SOURCE := $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp,%.o,$(wildcard *.cpp))
+CLIENT_OBJS:=client.o
+SERVER_OBJS:=sample_server.o
+
 
 #$(SOURCE:.cpp=.o): SOURCE
 #	$(CC) $(CFLAGS) $(DEBUG_FLAG) $(NO_WARNING) $<
-$(TARGET):$(OBJS)
+$(CLIENT):$(CLIENT_OBJS)
 	$(CC) $^ $(LIBDIR_FLAG)$(LIB_DIR) $(LIBS) -o $@ 
+	
+$(SERVER):$(SERVER_OBJS)
+	$(CC) $^ $(LIBDIR_FLAG)$(LIB_DIR) $(LIBS) -o $@
 
-all:$(TARGET)
+all:$(SERVER) $(CLIENT)
 
 clean:
-	rm -rf *.o $(TARGET) 
+	rm -rf *.o $(SERVER) $(CLIENT) 

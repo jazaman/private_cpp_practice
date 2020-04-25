@@ -3,8 +3,8 @@
 SHELL:= /bin/bash 
 CFLAGS=-c -Wall -Werror -pedantic
 NO_WARNING=-Wno-unused-variable
-LIBS=-lboost_system
 TARGET=$(shell basename $(shell pwd)) #derive the executable name from hte directory
+LIBS=-lboost_system -lboost_thread
 CLIENT=client
 SERVER=server
 
@@ -37,7 +37,7 @@ endif
 #SOURCE := $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp,%.o,$(wildcard *.cpp))
 CLIENT_OBJS:=boost_client.o
-SERVER_OBJS:=boost_timer.o
+SERVER_OBJS:=echo_server.o
 
 
 #$(SOURCE:.cpp=.o): SOURCE
@@ -48,7 +48,7 @@ $(CLIENT):$(CLIENT_OBJS)
 $(SERVER):$(SERVER_OBJS)
 	$(CC) $^ $(LIBDIR_FLAG)$(LIB_DIR) $(LIBS) -o $@
 
-all:$(SERVER) $(CLIENT)
+all:$(SERVER)
 
 clean:
-	rm -rf *.o $(SERVER) $(CLIENT) 
+	rm -rf *.o $(SERVER) 
