@@ -29,3 +29,16 @@ driver
 .project
 .cproject
 .settings/
+
+#backup
+.backup
+
+#dump
+.stackdump
+
+#compressed
+.zip
+.tar.zip
+
+#db
+.sqlite3
