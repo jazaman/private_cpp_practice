@@ -92,7 +92,7 @@ int main(int argc, char* argv[]) {
               << "\nPROVIDER:: " << provider_id
               << std::endl;
 
-    /* Open database */
+    /* Open sqlite database for test*/
     rc = sqlite3_open(sq_database.c_str(), &db);
 
     if( rc ) {
@@ -102,17 +102,9 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Test::Opened database %s successfully\n", sq_database.c_str());
     }
 
-    /* Create SQL statement */
-    //sql = "select sql from sqlite_master where name = 'member';";
-    //sql = "SELECT unionid, count(*) as member FROM MEMBER group by unionid;";
-
     sqlite3_close(db);
 
-    //handle pg
-    //create_table (argc, argv);
-    //insert data
-    //insert_data(argc, argv);
-    //std::string table_name = (argc == 8 ? argv[7]:"ancservice");
+    //clock the entire operation
     clock_t t, final = clock();
     std::vector<std::string> column_names, result_values;
     query_builder queries;

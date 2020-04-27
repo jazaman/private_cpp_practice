@@ -1,9 +1,9 @@
 # This make file si to be used as the base for the 
 # other projects
 SHELL:= /bin/bash 
-CFLAGS=-c -ansi -Wall -Werror -pedantic -std=c++0x
+CFLAGS=-c -Wall -Werror -pedantic
 NO_WARNING=-Wno-unused-variable
-LIBS=-lsqlite3 -lpqxx
+LIBS=-lsqlite3 -lpqxx -lboost_system
 TARGET=$(shell basename $(shell pwd)) #derive the executable name from hte directory
 
 
