@@ -9,6 +9,7 @@
 #include "pg_handler.h"
 #include "sqlite_handler.h"
 #include "query_builder.h"
+#include "networkmanager.h"
 
 /*
 static int callback(void *data, int argc, char **argv, char **azColName) {
@@ -32,7 +33,8 @@ static void show_usage(std::string name)
             << "\t-h,--help\t\tShow this help message\n"
             << "\t-d,--database SERVER-DATABASE\tSpecify the PostgreSQL Database"
             << "\t-s,--sqlite SQLITE-DATABASE\tSpecify the SQLITE Database"
-            << "\t-p,--provider PROVIDER_ID\tSpecify the provider_id"
+            << "\t-p,--port PORT\tSpecify the PORT the service is listening"
+            << "\t-P,--provider PROVIDER_ID\tSpecify the provider_id"
             << std::endl;
 }
 
@@ -46,7 +48,7 @@ int main(int argc, char* argv[]) {
     sqlite_handler sq;
 
     //parse the command line options
-    if (argc < 6) {
+    if (argc < 8) {
         show_usage(argv[0]);
         return 1;
     }
@@ -54,6 +56,7 @@ int main(int argc, char* argv[]) {
     std::string pg_database;
     std::string sq_database;
     std::string provider_id;
+    short port;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -75,7 +78,14 @@ int main(int argc, char* argv[]) {
                 std::cerr << "--database option requires one argument." << std::endl;
                 return 1;
             }
-        } else if ((arg == "-p") || (arg == "--provider")) {
+        } else if ((arg == "-p") || (arg == "--port")) {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+                port = atoi(argv[++i]); // Increment 'i' so we don't get the argument as the next argv[i].
+            } else { // Uh-oh, there was no argument to the destination option.
+                std::cerr << "--database option requires one argument." << std::endl;
+                return 1;
+            }
+        } else if ((arg == "-P") || (arg == "--provider")) {
             if (i + 1 < argc) { // Make sure we aren't at the end of argv!
                 provider_id = argv[++i]; // Increment 'i' so we don't get the argument as the next argv[i].
             } else { // Uh-oh, there was no argument to the destination option.
@@ -86,6 +96,11 @@ int main(int argc, char* argv[]) {
             sources.push_back(argv[i]);
         }
     }
+
+    //TODO - Remove this block
+    std::cout << "::STARTING SERVER::" << std::endl;
+    network_manager nm(port);
+    nm.server_loop();
 
     std::cout <<"PG-DB:: " << pg_database
               << "\nSQLITE-DB:: " << sq_database

@@ -9,16 +9,20 @@
 #define NETWORKMANAGER_H_
 #include <memory> //std::shared_ptr
 #include <boost/asio.hpp>
-
+using boost::asio::ip::tcp;
+class client_manager;
 class network_manager {
 public:
-    network_manager();
-    virtual ~network_manager();
-    void session();
-    void server_loop();
     typedef std::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr;
+    network_manager(short _port);
+    virtual ~network_manager();
+    void server_loop();
+
 private:
+    boost::asio::io_service io_service;
     socket_ptr socket;
+    short port;
+    std::vector<std::shared_ptr<client_manager>> client_list;
 };
 
 #endif /* NETWORKMANAGER_H_ */

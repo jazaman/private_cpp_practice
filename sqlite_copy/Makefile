@@ -3,7 +3,10 @@
 SHELL:= /bin/bash 
 CFLAGS=-c -Wall -Werror -pedantic
 NO_WARNING=-Wno-unused-variable
-LIBS=-lsqlite3 -lpqxx -lboost_system
+LIBS=-lsqlite3 -lpqxx -lzip -lboost_system -lboost_thread
+#-pthread
+#-lboost_thread
+
 TARGET=$(shell basename $(shell pwd)) #derive the executable name from hte directory
 
 
