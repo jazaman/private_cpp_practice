@@ -18,9 +18,10 @@ public:
 
     typedef std::map<const std::string, std::string&>::iterator table_iterator;
     const std::string get_query(const std::string& table_name);
-    const std::map<const std::string, std::string&>& get_query_map() { return query_map;};
+    const std::map<const std::string, std::string&>& get_query_map() { return db_builder_queries_;};
+    const std::string get_db_selection_query(const std::string _providerid) { return db_selection_query; };
 private:
-    std::map<const std::string, std::string&> query_map;
+    std::map<const std::string, std::string&> db_builder_queries_;
     std::string general_query = "select services.* " +
             std::string("from ( with pd as (select zillaid, upazilaid, unionid from providerdb ") +
             std::string("where providerid =  $1 and active = 1) ") + //1 - providerid
@@ -113,6 +114,10 @@ private:
                 std::string("select distinct healthid from pacservice inner join pd using (providerid) union ") +
                 std::string("select distinct generatedid as healthid from clientmap inner join pd using (zillaid, upazilaid, unionid) ") +
                 std::string(") all_id using(healthid) ");
+
+    std::string db_selection_query =
+                std::string("select format('RHIS_%1s_%s', zillaid, LPAD(upazilaid::text, 2, '0')) ") +
+                std::string("as db from providerdb where providerid = $1");
 
     std::string search_replace_all(const std::string& str, const std::string& search_str, const std::string& replace_str);
 };

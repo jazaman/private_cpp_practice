@@ -8,7 +8,7 @@
 #include <sstream>
 
 query_builder::query_builder()
-    : query_map{
+    : db_builder_queries_{
         {std::string("pregwomen"), pregwomen_query},
         {std::string("ancservice"), service_query},
         {std::string("delivery"), service_query},
@@ -25,6 +25,8 @@ query_builder::query_builder()
         {std::string("iudfollowupservice"), service_query},
         {std::string("implantservice"), service_query},
         {std::string("implantfollowupservice"), service_query},
+        {std::string("permanent_method_service"), service_query},
+        {std::string("permanent_method_followup_service"), service_query},
         {std::string("immunizationhistory"), service_query},
         {std::string("gpservice"), service_query},
         {std::string("death"), service_query},
@@ -39,8 +41,8 @@ query_builder::~query_builder() {
 
 const std::string query_builder::get_query(const std::string& table_name) {
     std::string table_query = "";
-    auto table = query_map.find(table_name);
-    if(table != query_map.end()) {
+    auto table = db_builder_queries_.find(table_name);
+    if(table != db_builder_queries_.end()) {
         table_query = search_replace_all(table->second, "<table_name>", table_name);
     }
 

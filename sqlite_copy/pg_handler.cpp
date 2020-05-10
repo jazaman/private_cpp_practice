@@ -129,9 +129,9 @@ int pg_handler::select_data(
         /* Get SQL statement */
         sql = query.get_query(table_name);
 
-//#ifdef DEBUG
+#ifdef DEBUG
         std::cout << "SELECT QUERY:\n" << sql << std::endl;
-//#endif
+#endif
         /* Create a non-transactional object. */
         //pqxx::nontransaction N(conn);
         pqxx::work W(conn);
@@ -194,4 +194,44 @@ int pg_handler::select_data(
     }
 
     return 0;
+}
+
+const std::string pg_handler:: get_providers_db(const std::string _providerid) {
+    std::string selected_db {}, sql {};
+    try {
+        pqxx::connection conn("dbname = RHIS_36 user = postgres password = postgres \
+          hostaddr = 127.0.0.1 port = 9432");
+        if (conn.is_open()) {
+            cout << "Opened database successfully: " << conn.dbname()<< endl;
+        } else {
+            cout << "Can't open database" << endl;
+            return selected_db;
+        }
+
+        /* Get SQL statement */
+        sql = query.get_db_selection_query(_providerid);
+
+#ifdef DEBUG
+        std::cout << "SELECT QUERY:\n" << sql << std::endl;
+#endif
+        /* Create a non-transactional object. */
+        //pqxx::nontransaction N(conn);
+        pqxx::work W(conn);
+        conn.prepare("query", sql.c_str());
+        /* Execute SQL query */
+        //pqxx::result R( N.exec( sql ));
+        pqxx::result R { W.prepared("query")(_providerid).exec()};
+
+        auto it = R.begin();
+
+        if(it != R.end()) {
+            selected_db = it["db"].c_str();
+        }
+
+
+    } catch (const std::exception &e) {
+        cerr <<"ERROR OCCURRED FOR SQL:\n" << sql << endl;
+        cerr << e.what() << std::endl;
+    }
+    return selected_db;
 }

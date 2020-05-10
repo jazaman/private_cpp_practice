@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
 
     //TODO - Remove this block
     std::cout << "::STARTING SERVER::" << std::endl;
-    network_manager nm(port);
+    network_manager nm(port, sq_database);
     nm.server_loop();
 
     std::cout <<"PG-DB:: " << pg_database

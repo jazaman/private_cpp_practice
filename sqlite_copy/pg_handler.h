@@ -22,7 +22,7 @@ int select_data(
         const std::string& provider_id,
         std::vector<std::string>& column_names,
         std::vector<std::string>& result_values);
-
+const std::string get_providers_db(const std::string _providerid);
 private:
     query_builder query;
 
