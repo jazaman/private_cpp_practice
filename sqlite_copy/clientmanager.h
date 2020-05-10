@@ -5,32 +5,44 @@
  *      Author: jamil.zaman
  */
 
-#ifndef CLIENTMANAGER_H_
-#define CLIENTMANAGER_H_
+#ifndef CLIENTWRAPPER_H_
+#define CLIENTWRAPPER_H_
 
 #include <boost/asio.hpp>
 #include <memory>
 #include <string>
+#include <map>
+#include <vector>
 
 class pg_handler;
 class sqlite_handler;
 
 
-class client_manager {
+class client_handler {
 public:
     //using boost::asio::ip::tcp;
     typedef std::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr;
-    client_manager(socket_ptr _socket);
-    virtual ~client_manager();
+    client_handler(socket_ptr _socket, std::string &_sq_database);
+    virtual ~client_handler();
     //void session(socket_ptr _socket);
     void session();
+    enum HTTP_HEADER {REQUEST_TYPE, REQUEST_PATH, VERSION, HOST }; //TODO: Not sure if I need this
 private:
     std::shared_ptr<pg_handler> pg_;
     std::shared_ptr<sqlite_handler> sq_;
     socket_ptr socket_;
+    std::string &sq_database_;
+    std::string dst_sq_database_;
+    std::map<std::string, std::string> request_details_;
+    std::string providers_db_;
+    std::string providerid_;
+    //std::vector<std::string> column_names_;
+    //std::vector<std::string> result_values_;
 
     void copy_file(const std::string& src, const std::string& dst);
     bool zip_file(const std::string& src, const std::string& dst);
+    bool prepare_db(const std::string& pg_database, const std::string& providerid, std::string& return_archive);
+    void parse_header(const char data[], size_t length);
 };
 
-#endif /* CLIENTMANAGER_H_ */
+#endif /* CLIENTWRAPPER_H_ */
