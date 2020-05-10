@@ -193,6 +193,11 @@ void client_handler::session() {
             }
 
             boost::asio::write(*socket_, boost::asio::buffer(total_response.c_str(), total_response.length()));
+            socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
+            socket_->close(error);
+            if (error) {
+                std::cerr << "Connection did not close cleanly... " << std::endl;
+            }
             break;
         }
     }
