@@ -153,28 +153,28 @@ int pg_handler::select_data(
 
         std::string columns = imploded.str();
         columns.erase(columns.find_last_of(","));
-#ifdef DEBUG
+#ifdef DEBUG_2
         std::cout << "COLUMNS:: " << columns << std::endl;
 #endif
         std::string result_holder = "";
 
         for (pqxx::result::const_iterator c = R.begin(); c != R.end(); ++c) {
             for(auto name:column_names) {
-#ifdef DEBUG
+#ifdef DEBUG_2
                 cout << name<<": " << c[name] << " db type: " << c[name].type() \
                      << " cpp type: "<< demangle(typeid(c[name]).name())<< endl;
 #endif
                 result_holder.append("'"+ std::string(c[name].c_str())+ "', ");
             }
             result_holder.erase(result_holder.find_last_of(","));
-#ifdef DEBUG
+#ifdef DEBUG_2
             std::cout << "imploded result: " << result_holder << std::endl;
 #endif
             result_values.push_back(result_holder);
             result_holder = "";
         }
 
-#ifdef DEBUG
+#ifdef DEBUG_2
         for(auto values:result_values) {
             std::cout << "-> " << values <<std::endl;
         }
@@ -226,8 +226,10 @@ const std::string pg_handler:: get_providers_db(const std::string _providerid) {
 
         if(it != R.end()) {
             selected_db = it["db"].c_str();
+        } else {
+            std::cout << "ERROR: provider do not exist" << std::endl;
+            selected_db = "ERROR";
         }
-
 
     } catch (const std::exception &e) {
         cerr <<"ERROR OCCURRED FOR SQL:\n" << sql << endl;

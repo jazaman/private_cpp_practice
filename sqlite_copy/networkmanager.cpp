@@ -7,6 +7,7 @@
 
 #include <Thread>
 #include <iostream>
+#include <algorithm>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include "networkmanager.h"
@@ -37,6 +38,15 @@ void network_manager::server_loop()
         //TODO:Welcome client
         //boost::asio::write(*sock, boost::asio::buffer(std::string("Welcome TO SQLITE COPY\r\n")));
         boost::thread t(std::bind(&client_handler::session, cm));
+        //check for closed connections and remove them
+        remove_dead_clients();
     }
+}
+
+void network_manager::remove_dead_clients() {
+    //remove inactive clients
+    client_list.erase(std::remove_if(client_list.begin(), client_list.end(),
+            [](auto& x){return !x->is_alive();}), //lamda
+            client_list.end());
 }
 
