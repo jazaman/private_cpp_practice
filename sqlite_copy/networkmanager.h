@@ -18,6 +18,7 @@ public:
     network_manager(short _port, std::string &_sq_database);
     virtual ~network_manager();
     void server_loop();
+    void remove_dead_clients();
 
 private:
     short port_;

@@ -26,6 +26,7 @@ public:
     virtual ~client_handler();
     //void session(socket_ptr _socket);
     void session();
+    bool is_alive();
     enum HTTP_HEADER {REQUEST_TYPE, REQUEST_PATH, VERSION, HOST }; //TODO: Not sure if I need this
 private:
     std::shared_ptr<pg_handler> pg_;
@@ -36,12 +37,12 @@ private:
     std::map<std::string, std::string> request_details_;
     std::string providers_db_;
     std::string providerid_;
-    //std::vector<std::string> column_names_;
-    //std::vector<std::string> result_values_;
+    std::string archive_file_;
 
     void copy_file(const std::string& src, const std::string& dst);
     bool zip_file(const std::string& src, const std::string& dst);
-    bool prepare_db(const std::string& pg_database, const std::string& providerid, std::string& return_archive);
+    void clean_client();
+    bool prepare_db(const std::string& pg_database, const std::string& providerid);
     void parse_header(const char data[], size_t length);
 };
 
