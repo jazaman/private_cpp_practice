@@ -1,7 +1,7 @@
 # This make file si to be used as the base for the 
 # other projects
 SHELL:= /bin/bash 
-CFLAGS=-c -Wall -Werror -pedantic
+CFLAGS=-c -Wall -Werror -pedantic -std=gnu++11
 NO_WARNING=-Wno-unused-variable
 LIBS=-lsqlite3 -lpqxx -lzip -lboost_system -lboost_thread
 #-pthread
