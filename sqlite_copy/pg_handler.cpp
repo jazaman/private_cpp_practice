@@ -118,7 +118,7 @@ int pg_handler::select_data(
 
     try {
         pqxx::connection conn("dbname = "+ db_name +" user = postgres password = postgres \
-      hostaddr = 127.0.0.1 port = 9432");
+      hostaddr = 127.0.0.1 port = 5432");
         if (conn.is_open()) {
             cout << "Opened database successfully: " << conn.dbname()<< " for table: " << table_name << endl;
         } else {
@@ -200,7 +200,7 @@ const std::string pg_handler:: get_providers_db(const std::string _providerid) {
     std::string selected_db {}, sql {};
     try {
         pqxx::connection conn("dbname = RHIS_36 user = postgres password = postgres \
-          hostaddr = 127.0.0.1 port = 9432");
+          hostaddr = 127.0.0.1 port = 5432");
         if (conn.is_open()) {
             cout << "Opened database successfully: " << conn.dbname()<< endl;
         } else {
