@@ -30,7 +30,7 @@ client_handler::client_handler(socket_ptr _socket, std::string &_sq_database)
 client_handler::~client_handler() {
     // TODO Auto-generated destructor stub
     // TODO: remove the auto generated files
-    std::cout << "FAIRWELL CLIENT: "<< providerid_ << " !!"<< std::endl;
+    std::cout << c_time_  << " FAIRWELL CLIENT: "<< providerid_ << " !!"<< std::endl;
 }
 
 void client_handler::copy_file(const std::string& src, const std::string& dst) {
@@ -52,17 +52,18 @@ void client_handler::copy_file(const std::string& src, const std::string& dst) {
 bool client_handler::zip_file(const std::string& src, const std::string& dst) {
     int error = 0;
     //Open zip archive, if not present create first
+    std::cout << c_time_ << "[" << providerid_ << "] begin compression ..." << std::endl;
     zip *archive = zip_open(dst.c_str(), ZIP_CREATE, &error);
 
     if(error) {
-        std::cout << "could not open or create archive" << std::endl;
+        std::cerr << "could not open or create archive" << std::endl;
         return false;
     }
 
     //source the zip content from file
     zip_source *source = zip_source_file(archive, src.c_str(), 0, 0);
     if(source == NULL) {
-        std::cout << "failed to create source buffer. " << zip_strerror(archive) << std::endl;
+        std::cerr << "failed to create source buffer. " << zip_strerror(archive) << std::endl;
         return false;
     }
 
@@ -73,6 +74,7 @@ bool client_handler::zip_file(const std::string& src, const std::string& dst) {
     std::cout << "Check if file creates at index: " << index <<std::endl;
 #endif
     zip_close(archive);
+    std::cout << c_time_ << "[" << providerid_ << "] end compression ..." << std::endl;
     return true;
 }
 
@@ -119,11 +121,13 @@ bool client_handler::prepare_db(
             t = clock();
             table_name = it.first;
             //extract data from postgresql
+            std::cout << c_time_ <<" Querying TABLE '" << table_name << std::endl;
             pg_->select_data(pg_database, table_name, providerid, column_names, result_values);
             //write it back to the postgresql database
+            std::cout << c_time_ <<" Writing TABLE '" << table_name << std::endl;
             sq_->insert_data(dst_sq_database_, table_name, column_names, result_values);
             t = clock() - t;
-            std::cout <<"\nTABLE '" << table_name << "' took " << t <<" ticks and " \
+            std::cout << c_time_ <<" TABLE '" << table_name << "' took " << t <<" ticks and " \
                     << (((float)t)/CLOCKS_PER_SEC) << " seconds" << std::endl;
 
             //clear the holding vectors after each round
@@ -135,7 +139,7 @@ bool client_handler::prepare_db(
         //zip the file
         zip_file(dst_sq_database_, archive_file_);
         final = clock() - final;
-        std::cout <<"\n["<< providerid_<<"] TOTAL LOADING TIME: " << final <<" TICKS AND " \
+        std::cout << c_time_ <<" ["<< providerid_<<"] TOTAL LOADING TIME: " << final <<" TICKS AND " \
                 << (((float)final)/CLOCKS_PER_SEC) << " SECONDS" << std::endl;
     } catch (std::exception& e) {
         std::cerr << "[CM - PrepareDB] - " << e.what() << std::endl;
@@ -161,7 +165,7 @@ void client_handler::session() {
             char data[1024];
 
             boost::system::error_code error{};
-            std::cout << " [CM] -> Waiting for client data ..." <<std::endl;
+            std::cout << c_time_ << "[CM] -> NEW client connected ..." <<std::endl;
             size_t length = socket_->read_some(boost::asio::buffer(data), error);
             if (error == boost::asio::error::eof)
                 break; // Connection closed cleanly by peer.
@@ -174,12 +178,12 @@ void client_handler::session() {
             //TODO: Verify providerid
             providers_db_ = pg_->get_providers_db(providerid_);
 
-            std::cout << "User -> " << providerid_ << " db -> " << providers_db_ <<std::endl;
+            std::cout << c_time_ << "User -> " << providerid_ << " db -> " << providers_db_ <<std::endl;
             //TODO: Need authentication code to check for valid request
             //boost::asio::write(*socket_, boost::asio::buffer(data, length));
 
             std::string total_response {};
-            if (providers_db_.compare("ERROR") && //if provider does not exist or other issue
+            if (providers_db_.compare("ERROR") && //0 if true - if provider does not exist
                 prepare_db(providers_db_, providerid_)) { //SUCCESS
                 std::ifstream ifs(archive_file_);
                 std::string str(std::istreambuf_iterator<char>{ifs}, {});

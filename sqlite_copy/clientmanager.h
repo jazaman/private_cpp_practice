@@ -13,6 +13,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "time_wrapper.h"
 
 class pg_handler;
 class sqlite_handler;
@@ -38,6 +39,7 @@ private:
     std::string providers_db_;
     std::string providerid_;
     std::string archive_file_;
+    time_wrapper c_time_;
 
     void copy_file(const std::string& src, const std::string& dst);
     bool zip_file(const std::string& src, const std::string& dst);

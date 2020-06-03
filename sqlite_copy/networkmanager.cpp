@@ -5,7 +5,6 @@
  *      Author: jamil.zaman
  */
 
-#include <Thread>
 #include <iostream>
 #include <algorithm>
 #include <boost/thread.hpp>
@@ -46,7 +45,7 @@ void network_manager::server_loop()
 void network_manager::remove_dead_clients() {
     //remove inactive clients
     client_list.erase(std::remove_if(client_list.begin(), client_list.end(),
-            [](auto& x){return !x->is_alive();}), //lamda
+            [](decltype (*client_list.begin()) &x){return !x->is_alive();}), //lamda - wish I could use auto
             client_list.end());
 }
 
