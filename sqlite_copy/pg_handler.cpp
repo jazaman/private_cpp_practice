@@ -185,7 +185,7 @@ int pg_handler::select_data(
             std::copy(c.begin(), c.end, std::ostream_iterator<const char*>(imploded_values, delim));
         }*/
 
-        cout << "Operation done successfully" << endl;
+        cout << "Operation done successfully, fetched "<< result_values.size()<< " for " << table_name << endl;
         conn.disconnect ();
     } catch (const std::exception &e) {
         cerr <<"ERROR OCCURRED FOR SQL:\n" << sql << endl;
@@ -202,7 +202,7 @@ const std::string pg_handler:: get_providers_db(const std::string _providerid) {
         pqxx::connection conn("dbname = RHIS_36 user = postgres password = postgres \
           hostaddr = 127.0.0.1 port = 9432");
         if (conn.is_open()) {
-            cout << "Opened database successfully: " << conn.dbname()<< endl;
+            cout << "Opened database successfully: " << conn.dbname()<< "for provider: [" <<_providerid<<"]"<< endl;
         } else {
             cout << "Can't open database" << endl;
             return selected_db;
@@ -211,9 +211,9 @@ const std::string pg_handler:: get_providers_db(const std::string _providerid) {
         /* Get SQL statement */
         sql = query.get_db_selection_query(_providerid);
 
-#ifdef DEBUG
+//#ifdef DEBUG
         std::cout << "SELECT QUERY:\n" << sql << std::endl;
-#endif
+//#endif
         /* Create a non-transactional object. */
         //pqxx::nontransaction N(conn);
         pqxx::work W(conn);

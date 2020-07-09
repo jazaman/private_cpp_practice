@@ -23,6 +23,7 @@ int select_data(
         std::vector<std::string>& column_names,
         std::vector<std::string>& result_values);
 const std::string get_providers_db(const std::string _providerid);
+int get_providerid(const std::string& providerid, int providerid_int, std::vector<std::string>& db_name) {return 0;}
 private:
     query_builder query;
 

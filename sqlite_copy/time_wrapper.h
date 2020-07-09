@@ -31,6 +31,13 @@ public:
         }
         return output;
     }
+
+    static time_wrapper& get_timer() {
+        static time_wrapper tw;
+        return tw;
+    }
+
+    //TODO make all default, copy, assignment private
 };
 
 

@@ -23,23 +23,25 @@ class client_handler {
 public:
     //using boost::asio::ip::tcp;
     typedef std::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr;
+    typedef std::map<std::string, std::pair<std::vector<std::string>,std::vector<std::string>>> t_keyed_data;
     client_handler(socket_ptr _socket, std::string &_sq_database);
     virtual ~client_handler();
     //void session(socket_ptr _socket);
-    void session();
+    int session();
     bool is_alive();
     enum HTTP_HEADER {REQUEST_TYPE, REQUEST_PATH, VERSION, HOST }; //TODO: Not sure if I need this
 private:
+    std::string &sq_database_;
     std::shared_ptr<pg_handler> pg_;
     std::shared_ptr<sqlite_handler> sq_;
     socket_ptr socket_;
-    std::string &sq_database_;
+    time_wrapper& c_time_;
     std::string dst_sq_database_;
     std::map<std::string, std::string> request_details_;
     std::string providers_db_;
     std::string providerid_;
     std::string archive_file_;
-    time_wrapper c_time_;
+
 
     void copy_file(const std::string& src, const std::string& dst);
     bool zip_file(const std::string& src, const std::string& dst);

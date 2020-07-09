@@ -44,8 +44,6 @@ int main(int argc, char* argv[]) {
     int rc;
     std::string sql;
     const char* data = "Callback function called";
-    pg_handler pg;
-    sqlite_handler sq;
 
     //parse the command line options
     if (argc < 8) {
@@ -102,47 +100,5 @@ int main(int argc, char* argv[]) {
     network_manager nm(port, sq_database);
     nm.server_loop();
 
-    std::cout <<"PG-DB:: " << pg_database
-              << "\nSQLITE-DB:: " << sq_database
-              << "\nPROVIDER:: " << provider_id
-              << std::endl;
-
-    /* Open sqlite database for test*/
-    rc = sqlite3_open(sq_database.c_str(), &db);
-
-    if( rc ) {
-        fprintf(stderr, "Can't open database %s: %s\n", sq_database.c_str(), sqlite3_errmsg(db));
-        return(0);
-    } else {
-        fprintf(stderr, "Test::Opened database %s successfully\n", sq_database.c_str());
-    }
-
-    sqlite3_close(db);
-
-    //clock the entire operation
-    clock_t t, final = clock();
-    std::vector<std::string> column_names, result_values;
-    query_builder queries;
-    //auto tables = queries.get_query_map();
-    int i = 0;
-    std::string table_name = "";
-    for(auto it:queries.get_query_map()) {
-        t = clock();
-        table_name = it.first;
-        pg.select_data(pg_database, table_name, provider_id, column_names, result_values);
-        //sqlite_handler::create_table(sq_database);
-        sq.insert_data(sq_database, table_name, column_names, result_values);
-        t = clock() - t;
-        std::cout <<"\nTABLE '" << table_name << "' took " << t <<" ticks and " \
-                << (((float)t)/CLOCKS_PER_SEC) << " seconds" << std::endl;
-
-        result_values.clear();
-        column_names.clear();
-        //if(i++> 3) break;
-    }
-
-    final = clock() - final;
-    std::cout <<"\nTHE DATA LOADING TOOK " << final <<" ticks and " \
-                    << (((float)final)/CLOCKS_PER_SEC) << " seconds" << std::endl;
     return 0;
 }

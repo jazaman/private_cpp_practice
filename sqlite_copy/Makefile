@@ -3,7 +3,7 @@
 SHELL:= /bin/bash 
 CFLAGS=-c -Wall -Werror -pedantic
 NO_WARNING=-Wno-unused-variable
-LIBS=-lsqlite3 -lpqxx -lzip -lboost_system -lboost_thread
+LIBS=-lsqlite3 -lpqxx -lzip -lboost_system -pthread
 #-pthread
 #-lboost_thread
 

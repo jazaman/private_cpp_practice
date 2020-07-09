@@ -7,6 +7,8 @@
 
 #include <iostream>
 #include <algorithm>
+#include <thread>
+#include <future>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include "networkmanager.h"
@@ -28,6 +30,8 @@ network_manager::~network_manager() {
 void network_manager::server_loop()
 {
     tcp::acceptor a(io_service, tcp::endpoint(tcp::v4(), port_));
+    //std::vector<std::thread> workers;
+    std::vector<std::future<int>> results;
     for (;;) //forever, server loop may need to install a signal to stop it gracefully
     {
         socket_ptr sock(new tcp::socket(io_service));
@@ -36,8 +40,11 @@ void network_manager::server_loop()
         a.accept(*sock);
         //TODO:Welcome client
         //boost::asio::write(*sock, boost::asio::buffer(std::string("Welcome TO SQLITE COPY\r\n")));
-        boost::thread t(std::bind(&client_handler::session, cm));
+        //workers.push_back(std::thread (std::bind(&client_handler::session, cm)));
+
+        //t.join();
         //check for closed connections and remove them
+        results.push_back(std::async(std::launch::async, &client_handler::session, cm));
         remove_dead_clients();
     }
 }
