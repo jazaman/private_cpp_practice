@@ -13,6 +13,7 @@
 #include <cstdio>    // BUFSIZ
 #include <zip.h>
 #include <fstream>
+#include <future>
 
 #include "clientmanager.h"
 #include "sqlite_handler.h"
@@ -20,10 +21,10 @@
 
 
 client_handler::client_handler(socket_ptr _socket, std::string &_sq_database)
-: pg_(new pg_handler),
-  sq_(new sqlite_handler),
+: sq_database_(_sq_database),
+  pg_(new pg_handler),
   socket_(_socket),
-  sq_database_(_sq_database),
+  c_time_(time_wrapper::get_timer()),
   archive_file_{""}
 {}
 
@@ -43,10 +44,8 @@ void client_handler::copy_file(const std::string& src, const std::string& dst) {
     while ((size = read(source, buf, BUFSIZ)) > 0) {
         write(dest, buf, size);
     }
-
     close(source);
     close(dest);
-
 }
 
 bool client_handler::zip_file(const std::string& src, const std::string& dst) {
@@ -113,29 +112,78 @@ bool client_handler::prepare_db(
         copy_file(sq_database_, dst_sq_database_); //copy the template database
         //clock the entire operation
         clock_t t, final = clock();
+        t_keyed_data all_data;
         std::vector<std::string> column_names, result_values;
+        std::map<std::string, std::future<int>> result_status;
         query_builder queries;
         int i = 0;
         std::string table_name = "";
+        //create the sqlitehandler first
+        std::shared_ptr<sqlite_handler> sq {std::make_shared<sqlite_handler>(dst_sq_database_)};
         for(auto it:queries.get_query_map()) { //browse each table of query map
             t = clock();
             table_name = it.first;
+            all_data[table_name] = std::make_pair(std::vector<std::string>(), std::vector<std::string>());
             //extract data from postgresql
-            std::cout << c_time_ <<" Querying TABLE '" << table_name << std::endl;
-            pg_->select_data(pg_database, table_name, providerid, column_names, result_values);
-            //write it back to the postgresql database
-            std::cout << c_time_ <<" Writing TABLE '" << table_name << std::endl;
-            sq_->insert_data(dst_sq_database_, table_name, column_names, result_values);
+            std::cout << c_time_ <<" Querying TABLE: " << table_name << std::endl;
+            //pg_->select_data(pg_database, table_name, providerid, column_names, result_values);
+
+            /*pg_->select_data(pg_database, table_name, providerid,
+                   all_data[table_name].first column names,
+                    all_data[table_name].secondresult values);
+             */
+
+            result_status[table_name] = std::async(
+                    std::launch::async,
+                    &pg_handler::select_data, pg_, //the function and the object reference to call
+                    pg_database,
+                    table_name,
+                    providerid,
+                    std::ref(all_data[table_name].first),// column names,
+                    std::ref(all_data[table_name].second)//result values
+            );
+
+            /*result_status[table_name] = std::async(
+                                std::launch::async,
+                                &pg_handler::get_providerid, pg_, //the function and the object reference to call
+                                providerid, std::stoi(providerid), std::ref(column_names)
+                        );*/
+
+            //write it back to the sqlite database
+            //std::cout << c_time_ <<" Writing TABLE '" << table_name << std::endl;
+
+            /*sq->insert_data(
+                    //dst_sq_database_,
+                    table_name,
+                    all_data[table_name].first,
+                    all_data[table_name].second
+                    );*/
+
             t = clock() - t;
             std::cout << c_time_ <<" TABLE '" << table_name << "' took " << t <<" ticks and " \
                     << (((float)t)/CLOCKS_PER_SEC) << " seconds" << std::endl;
 
             //clear the holding vectors after each round
-            result_values.clear();
-            column_names.clear();
+            //result_values.clear();
+            //column_names.clear();
             //if(i++> 3) break;
         }
 
+        for(auto it:queries.get_query_map()) { //browse each table of query map
+            if(result_status[it.first].get() == 0) { //result ready
+                std::cout << c_time_ <<" [CM] RESULT READY FOR TABLE '" << it.first << " START INSERTION" << std::endl;
+                sq->insert_data(
+                        it.first,
+                        all_data[it.first].first,
+                        all_data[it.first].second
+                );
+            } else {
+                std::cout << c_time_ <<" [CM] RESULT NOT READY FOR TABLE '" << it.first << " START INSERTION" << std::endl;
+            }
+        }
+
+        //dump in_memory dbto actual file
+        sq->dump_db(dst_sq_database_);
         //zip the file
         zip_file(dst_sq_database_, archive_file_);
         final = clock() - final;
@@ -153,7 +201,7 @@ bool client_handler::prepare_db(
 }
 
 //void client_wrapper::session(socket_ptr _socket) {
-void client_handler::session() {
+int client_handler::session() {
 
     std::string response_header {};
     std::string response_tail ("\r\r");
@@ -212,6 +260,7 @@ void client_handler::session() {
     {
         std::cerr << "[CM] Exception in thread: " << e.what() << "\n";
     }
+    return 0;
 }
 
 bool client_handler::is_alive() {

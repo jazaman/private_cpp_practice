@@ -199,6 +199,7 @@ int pg_handler::select_data(
 const std::string pg_handler:: get_providers_db(const std::string _providerid) {
     std::string selected_db {}, sql {};
     try {
+        //TODO - Need zillaid from client side to identify which district database to connect to
         pqxx::connection conn("dbname = RHIS_36 user = postgres password = postgres \
           hostaddr = 127.0.0.1 port = 9432");
         if (conn.is_open()) {
