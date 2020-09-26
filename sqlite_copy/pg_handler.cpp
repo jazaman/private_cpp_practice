@@ -220,9 +220,9 @@ const std::string pg_handler:: get_providers_db(const std::string _providerid) {
         /* Get SQL statement */
         sql = query.get_db_selection_query(_providerid);
 
-//#ifdef DEBUG
+#ifdef DEBUG
         std::cout << "SELECT QUERY:\n" << sql << std::endl;
-//#endif
+#endif
         /* Create a non-transactional object. */
         //pqxx::nontransaction N(conn);
         pqxx::work W(conn);
