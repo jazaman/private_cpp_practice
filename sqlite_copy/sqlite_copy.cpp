@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
     std::string pg_database;
     std::string sq_database;
     std::string config_file;
-    short port = -1;
+    unsigned short port = 0;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
     //TODO - Remove this block
     config_manager& conf = config_manager::instance(config_file);
     network_manager nm(port > 0? port : conf.port(), sq_database);
-    std::cout << ":: STARTING SERVER at (" << nm.get_port() << ") ::" << std::endl;
+    std::cout << ":: STARTING SERVER at (" << std::to_string(nm.get_port()) << ") ::" << std::endl;
     nm.server_loop();
 
     return 0;

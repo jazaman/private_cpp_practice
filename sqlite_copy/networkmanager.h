@@ -21,10 +21,10 @@ public:
     void server_loop();
     void remove_dead_clients();
     //void set_port(short _port) {port_ = _port;};
-    const short& get_port() const {return port_;};
+    const unsigned short& get_port() const {return port_;};
 
 private:
-    short port_;
+    unsigned short port_;
     std::string &sq_database_;
     boost::asio::io_service io_service;
     std::vector<std::shared_ptr<client_handler>> client_list;

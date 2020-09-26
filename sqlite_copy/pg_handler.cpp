@@ -16,6 +16,7 @@
 #include <cxxabi.h>
 #include <sstream>
 #include <iterator>
+#include "configmanager.h"
 
 std::string demangle(const char* name) {
 
@@ -189,7 +190,7 @@ int pg_handler::select_data(
         }*/
 
         cout << "QUERY COMPLETED, FETCHED "<< result_values.size()<< " RECORDS FOR " << table_name << endl;
-        query_status = table_status::INSERTED; //indicating query ended
+        query_status = table_status::READY; //indicating query ended
         conn.disconnect ();
     } catch (const std::exception &e) {
         cerr <<"ERROR OCCURRED FOR SQL:\n" << sql << endl;

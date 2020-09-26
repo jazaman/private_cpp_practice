@@ -49,7 +49,7 @@ public:
     const std::string& password() const {return password_;};
     const std::string& user() const {return user_;};
 
-    static auto& instance(const std::string& _conf) {
+    static config_manager& instance(const std::string& _conf) {
         static config_manager config(_conf);
         return config;
     }

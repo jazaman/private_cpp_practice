@@ -348,11 +348,20 @@ int sqlite_handler::process_dml_row(void *pData, int nColumns,
 
 int sqlite_handler::dump_db(const std::string& destination_db) {
     sqlite3* destination {};
-    int rc = sqlite3_open(destination_db.c_str(), &destination);
+    int rc;
+    if((rc = sqlite3_open(destination_db.c_str(), &destination)) != SQLITE_OK) {
+        std::cerr << "Could not open backup file RC: ["<< rc << "] :: "<< sqlite3_errmsg(destination);
+    }
     sqlite3_backup* pBackup = sqlite3_backup_init(destination, "main", inmemorydb_, "main");
     if( pBackup ){
-        (void)sqlite3_backup_step(pBackup, -1);
-        (void)sqlite3_backup_finish(pBackup);
+        if((rc = sqlite3_backup_step(pBackup, -1)) == SQLITE_DONE){
+            if((rc = sqlite3_backup_finish(pBackup)) != SQLITE_OK) {
+                std::cerr << "Could not open backup file RC: ["<< rc << "] :: "<< sqlite3_errmsg(destination);
+            }
+        }
+    }
+    if((rc = sqlite3_errcode(destination))!= SQLITE_OK) {
+        std::cerr << "Something Went Wrong RC: ["<< rc << "] :: "<< sqlite3_errmsg(destination);
     }
     return rc;
 }
