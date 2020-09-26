@@ -9,6 +9,7 @@
 #define NETWORKMANAGER_H_
 #include <memory> //std::shared_ptr
 #include <boost/asio.hpp>
+
 using boost::asio::ip::tcp;
 class client_handler;
 
@@ -19,6 +20,8 @@ public:
     virtual ~network_manager();
     void server_loop();
     void remove_dead_clients();
+    //void set_port(short _port) {port_ = _port;};
+    const short& get_port() const {return port_;};
 
 private:
     short port_;

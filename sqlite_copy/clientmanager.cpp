@@ -13,6 +13,7 @@
 #include <cstdio>    // BUFSIZ
 #include <zip.h>
 #include <fstream>
+#include <future>
 
 #include "clientmanager.h"
 #include "sqlite_handler.h"
@@ -20,17 +21,17 @@
 
 
 client_handler::client_handler(socket_ptr _socket, std::string &_sq_database)
-: pg_(new pg_handler),
-  sq_(new sqlite_handler),
+: sq_database_(_sq_database),
+  pg_(new pg_handler),
   socket_(_socket),
-  sq_database_(_sq_database),
+  c_time_(time_wrapper::get_timer()),
   archive_file_{""}
 {}
 
 client_handler::~client_handler() {
     // TODO Auto-generated destructor stub
     // TODO: remove the auto generated files
-    std::cout << "FAIRWELL CLIENT: "<< providerid_ << " !!"<< std::endl;
+    std::cout << c_time_  << " FAIRWELL CLIENT: "<< providerid_ << " !!"<< std::endl;
 }
 
 void client_handler::copy_file(const std::string& src, const std::string& dst) {
@@ -43,26 +44,25 @@ void client_handler::copy_file(const std::string& src, const std::string& dst) {
     while ((size = read(source, buf, BUFSIZ)) > 0) {
         write(dest, buf, size);
     }
-
     close(source);
     close(dest);
-
 }
 
 bool client_handler::zip_file(const std::string& src, const std::string& dst) {
     int error = 0;
     //Open zip archive, if not present create first
+    std::cout << c_time_ << "[" << providerid_ << "] begin compression ..." << std::endl;
     zip *archive = zip_open(dst.c_str(), ZIP_CREATE, &error);
 
     if(error) {
-        std::cout << "could not open or create archive" << std::endl;
+        std::cerr << "could not open or create archive" << std::endl;
         return false;
     }
 
     //source the zip content from file
     zip_source *source = zip_source_file(archive, src.c_str(), 0, 0);
     if(source == NULL) {
-        std::cout << "failed to create source buffer. " << zip_strerror(archive) << std::endl;
+        std::cerr << "failed to create source buffer. " << zip_strerror(archive) << std::endl;
         return false;
     }
 
@@ -73,6 +73,7 @@ bool client_handler::zip_file(const std::string& src, const std::string& dst) {
     std::cout << "Check if file creates at index: " << index <<std::endl;
 #endif
     zip_close(archive);
+    std::cout << c_time_ << "[" << providerid_ << "] end compression ..." << std::endl;
     return true;
 }
 
@@ -111,31 +112,102 @@ bool client_handler::prepare_db(
         copy_file(sq_database_, dst_sq_database_); //copy the template database
         //clock the entire operation
         clock_t t, final = clock();
+        t_keyed_data all_data;
         std::vector<std::string> column_names, result_values;
+        std::map<std::string, std::future<int>> result_futures;
+        std::map<std::string, pg_handler::table_status> result_status;
         query_builder queries;
         int i = 0;
         std::string table_name = "";
+        //create the sqlitehandler first
+        std::shared_ptr<sqlite_handler> sq {std::make_shared<sqlite_handler>(dst_sq_database_)};
         for(auto it:queries.get_query_map()) { //browse each table of query map
             t = clock();
             table_name = it.first;
+            all_data[table_name] = std::make_pair(std::vector<std::string>(), std::vector<std::string>());
             //extract data from postgresql
-            pg_->select_data(pg_database, table_name, providerid, column_names, result_values);
-            //write it back to the postgresql database
-            sq_->insert_data(dst_sq_database_, table_name, column_names, result_values);
+            std::cout << c_time_ <<" Querying TABLE: " << table_name << std::endl;
+            //pg_->select_data(pg_database, table_name, providerid, column_names, result_values);
+
+            /*pg_->select_data(pg_database, table_name, providerid,
+                   all_data[table_name].first column names,
+                    all_data[table_name].secondresult values);
+             */
+
+            result_status[table_name] = pg_handler::NOT_READY; //initiating with not ready
+            result_futures[table_name] = std::async(
+                    std::launch::async,
+                    &pg_handler::select_data, pg_, //the function and the object reference to call
+                    pg_database,
+                    table_name,
+                    providerid,
+                    std::ref(all_data[table_name].first),// column names,
+                    std::ref(all_data[table_name].second),//result values,
+                    std::ref(result_status[table_name])   //query status
+            );
+
+            /*result_status[table_name] = std::async(
+                                std::launch::async,
+                                &pg_handler::get_providerid, pg_, //the function and the object reference to call
+                                providerid, std::stoi(providerid), std::ref(column_names)
+                        );*/
+
+            //write it back to the sqlite database
+            //std::cout << c_time_ <<" Writing TABLE '" << table_name << std::endl;
+
+            /*sq->insert_data(
+                    //dst_sq_database_,
+                    table_name,
+                    all_data[table_name].first,
+                    all_data[table_name].second
+                    );*/
+
             t = clock() - t;
-            std::cout <<"\nTABLE '" << table_name << "' took " << t <<" ticks and " \
+            std::cout << c_time_ <<" TABLE '" << table_name << "' took " << t <<" ticks and " \
                     << (((float)t)/CLOCKS_PER_SEC) << " seconds" << std::endl;
 
             //clear the holding vectors after each round
-            result_values.clear();
-            column_names.clear();
+            //result_values.clear();
+            //column_names.clear();
             //if(i++> 3) break;
         }
 
+        bool loop_again;
+        //vector of map iterators
+        //std::vector<decltype(queries.get_query_map().begin())> delete_list;
+        do {
+            loop_again = false;
+            for (auto it = queries.get_query_map().begin();
+                    it != queries.get_query_map().end(); ++it) { //browse each table of query map
+                if (result_status[it->first] == pg_handler::READY
+                        && result_futures[it->first].get() == 0) { //result ready
+                    std::cout << c_time_ << " [CM] RESULT READY FOR TABLE '"
+                            << it->first << " TO START INSERTION" << std::endl;
+                    sq->insert_data(it->first, all_data[it->first].first,
+                            all_data[it->first].second);
+                    //remove table reference before next iteration
+                    //delete_list.push_back(it);
+                    //it = m.erase(it)
+                    result_status[it->first] = pg_handler::INSERTED;
+                } else if (result_status[it->first] == pg_handler::INSERTED ||
+                           result_status[it->first] == pg_handler::ERRORED) {
+                    //skip
+                } else {
+                    std::cout << c_time_ << " [CM] RESULT NOT READY FOR TABLE '"
+                            << it->first << "' TO START INSERTION" << std::endl;
+                    loop_again = true;
+                }
+            }
+            //sleep little
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        } while (loop_again);
+
+        //dump in_memory dbto actual file
+        sq->dump_db(dst_sq_database_);
         //zip the file
         zip_file(dst_sq_database_, archive_file_);
         final = clock() - final;
-        std::cout <<"\n["<< providerid_<<"] TOTAL LOADING TIME: " << final <<" TICKS AND " \
+        std::cout << c_time_ <<" ["<< providerid_<<"] TOTAL LOADING TIME: " << final <<" TICKS AND " \
                 << (((float)final)/CLOCKS_PER_SEC) << " SECONDS" << std::endl;
     } catch (std::exception& e) {
         std::cerr << "[CM - PrepareDB] - " << e.what() << std::endl;
@@ -149,7 +221,7 @@ bool client_handler::prepare_db(
 }
 
 //void client_wrapper::session(socket_ptr _socket) {
-void client_handler::session() {
+int client_handler::session() {
 
     std::string response_header {};
     std::string response_tail ("\r\r");
@@ -161,7 +233,7 @@ void client_handler::session() {
             char data[1024];
 
             boost::system::error_code error{};
-            std::cout << " [CM] -> Waiting for client data ..." <<std::endl;
+            std::cout << c_time_ << "[CM] -> NEW client connected ..." <<std::endl;
             size_t length = socket_->read_some(boost::asio::buffer(data), error);
             if (error == boost::asio::error::eof)
                 break; // Connection closed cleanly by peer.
@@ -174,12 +246,12 @@ void client_handler::session() {
             //TODO: Verify providerid
             providers_db_ = pg_->get_providers_db(providerid_);
 
-            std::cout << "User -> " << providerid_ << " db -> " << providers_db_ <<std::endl;
+            std::cout << c_time_ << "User -> " << providerid_ << " db -> " << providers_db_ <<std::endl;
             //TODO: Need authentication code to check for valid request
             //boost::asio::write(*socket_, boost::asio::buffer(data, length));
 
             std::string total_response {};
-            if (providers_db_.compare("ERROR") && //if provider does not exist or other issue
+            if (providers_db_.compare("ERROR") && //0 if true - if provider does not exist
                 prepare_db(providers_db_, providerid_)) { //SUCCESS
                 std::ifstream ifs(archive_file_);
                 std::string str(std::istreambuf_iterator<char>{ifs}, {});
@@ -208,6 +280,7 @@ void client_handler::session() {
     {
         std::cerr << "[CM] Exception in thread: " << e.what() << "\n";
     }
+    return 0;
 }
 
 bool client_handler::is_alive() {

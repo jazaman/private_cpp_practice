@@ -34,6 +34,8 @@ using namespace std;
 //using namespace pqxx;
 //template <typename T> std::string type_name();
 
+pg_handler::pg_handler(): cm(config_manager::instance("")) {}
+
 int pg_handler::create_table (int argc, char* argv[]) {
     std::string sql;
 
@@ -113,12 +115,13 @@ int pg_handler::select_data(
         const std::string& table_name,
         const std::string& provider_id,
         std::vector<std::string>& column_names,
-        std::vector<std::string>& result_values) {
+        std::vector<std::string>& result_values,
+        table_status& query_status) {
     std::string sql;
 
     try {
-        pqxx::connection conn("dbname = "+ db_name +" user = postgres password = postgres \
-      hostaddr = 127.0.0.1 port = 5432");
+        pqxx::connection conn("dbname = "+ db_name +" user = "+cm.user()+" password = "
+                + cm.password()+" hostaddr = " + cm.address() + " port = " + std::to_string(cm.db_port()));
         if (conn.is_open()) {
             cout << "Opened database successfully: " << conn.dbname()<< " for table: " << table_name << endl;
         } else {
@@ -185,11 +188,13 @@ int pg_handler::select_data(
             std::copy(c.begin(), c.end, std::ostream_iterator<const char*>(imploded_values, delim));
         }*/
 
-        cout << "Operation done successfully" << endl;
+        cout << "QUERY COMPLETED, FETCHED "<< result_values.size()<< " RECORDS FOR " << table_name << endl;
+        query_status = table_status::INSERTED; //indicating query ended
         conn.disconnect ();
     } catch (const std::exception &e) {
         cerr <<"ERROR OCCURRED FOR SQL:\n" << sql << endl;
         cerr << e.what() << std::endl;
+        query_status = table_status::ERRORED; //indicating query ended
         return 1;
     }
 
@@ -199,10 +204,13 @@ int pg_handler::select_data(
 const std::string pg_handler:: get_providers_db(const std::string _providerid) {
     std::string selected_db {}, sql {};
     try {
-        pqxx::connection conn("dbname = RHIS_36 user = postgres password = postgres \
-          hostaddr = 127.0.0.1 port = 5432");
+        //TODO - Need zillaid from client side to identify which district database to connect to
+        /*pqxx::connection conn("dbname = RHIS_36 user = postgres password = postgres \
+          hostaddr = 127.0.0.1 port = 9432");*/
+        pqxx::connection conn("dbname = RHIS_36 user = " + cm.user() + " password = "
+                        + cm.password() + " hostaddr = " + cm.address() + " port = " + std::to_string(cm.db_port()));
         if (conn.is_open()) {
-            cout << "Opened database successfully: " << conn.dbname()<< endl;
+            cout << "Opened database successfully: " << conn.dbname()<< "for provider: [" <<_providerid<<"]"<< endl;
         } else {
             cout << "Can't open database" << endl;
             return selected_db;
