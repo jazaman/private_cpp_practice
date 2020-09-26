@@ -10,6 +10,7 @@
 #include "sqlite_handler.h"
 #include "query_builder.h"
 #include "networkmanager.h"
+#include "configmanager.h"
 
 /*
 static int callback(void *data, int argc, char **argv, char **azColName) {
@@ -31,10 +32,10 @@ static void show_usage(std::string name)
     std::cerr << "Usage: " << name << " <option(s)> SOURCES"
             << "Options:\n"
             << "\t-h,--help\t\tShow this help message\n"
-            << "\t-d,--database SERVER-DATABASE\tSpecify the PostgreSQL Database"
+            //<< "\t-d,--database SERVER-DATABASE\tSpecify the PostgreSQL Database"
             << "\t-s,--sqlite SQLITE-DATABASE\tSpecify the SQLITE Database"
             << "\t-p,--port PORT\tSpecify the PORT the service is listening"
-            << "\t-P,--provider PROVIDER_ID\tSpecify the provider_id"
+            << "\t-c,--config CONFIG FILE\tCOnfiguration file"
             << std::endl;
 }
 
@@ -46,15 +47,15 @@ int main(int argc, char* argv[]) {
     const char* data = "Callback function called";
 
     //parse the command line options
-    if (argc < 8) {
+    if (argc < 6) {
         show_usage(argv[0]);
         return 1;
     }
     std::vector <std::string> sources;
     std::string pg_database;
     std::string sq_database;
-    std::string provider_id;
-    short port;
+    std::string config_file;
+    short port = -1;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -83,9 +84,9 @@ int main(int argc, char* argv[]) {
                 std::cerr << "--database option requires one argument." << std::endl;
                 return 1;
             }
-        } else if ((arg == "-P") || (arg == "--provider")) {
+        } else if ((arg == "-c") || (arg == "--config")) {
             if (i + 1 < argc) { // Make sure we aren't at the end of argv!
-                provider_id = argv[++i]; // Increment 'i' so we don't get the argument as the next argv[i].
+                config_file = argv[++i]; // Increment 'i' so we don't get the argument as the next argv[i].
             } else { // Uh-oh, there was no argument to the destination option.
                 std::cerr << "--database option requires one argument." << std::endl;
                 return 1;
@@ -96,8 +97,9 @@ int main(int argc, char* argv[]) {
     }
 
     //TODO - Remove this block
-    std::cout << "::STARTING SERVER::" << std::endl;
-    network_manager nm(port, sq_database);
+    config_manager& conf = config_manager::instance(config_file);
+    network_manager nm(port > 0? port : conf.port(), sq_database);
+    std::cout << ":: STARTING SERVER at (" << nm.get_port() << ") ::" << std::endl;
     nm.server_loop();
 
     return 0;

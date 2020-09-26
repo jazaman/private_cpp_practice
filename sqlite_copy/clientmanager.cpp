@@ -114,7 +114,8 @@ bool client_handler::prepare_db(
         clock_t t, final = clock();
         t_keyed_data all_data;
         std::vector<std::string> column_names, result_values;
-        std::map<std::string, std::future<int>> result_status;
+        std::map<std::string, std::future<int>> result_futures;
+        std::map<std::string, pg_handler::table_status> result_status;
         query_builder queries;
         int i = 0;
         std::string table_name = "";
@@ -133,14 +134,16 @@ bool client_handler::prepare_db(
                     all_data[table_name].secondresult values);
              */
 
-            result_status[table_name] = std::async(
+            result_status[table_name] = pg_handler::NOT_READY; //initiating with not ready
+            result_futures[table_name] = std::async(
                     std::launch::async,
                     &pg_handler::select_data, pg_, //the function and the object reference to call
                     pg_database,
                     table_name,
                     providerid,
                     std::ref(all_data[table_name].first),// column names,
-                    std::ref(all_data[table_name].second)//result values
+                    std::ref(all_data[table_name].second),//result values,
+                    std::ref(result_status[table_name])   //query status
             );
 
             /*result_status[table_name] = std::async(
@@ -169,18 +172,35 @@ bool client_handler::prepare_db(
             //if(i++> 3) break;
         }
 
-        for(auto it:queries.get_query_map()) { //browse each table of query map
-            if(result_status[it.first].get() == 0) { //result ready
-                std::cout << c_time_ <<" [CM] RESULT READY FOR TABLE '" << it.first << " START INSERTION" << std::endl;
-                sq->insert_data(
-                        it.first,
-                        all_data[it.first].first,
-                        all_data[it.first].second
-                );
-            } else {
-                std::cout << c_time_ <<" [CM] RESULT NOT READY FOR TABLE '" << it.first << " START INSERTION" << std::endl;
+        bool loop_again;
+        //vector of map iterators
+        //std::vector<decltype(queries.get_query_map().begin())> delete_list;
+        do {
+            loop_again = false;
+            for (auto it = queries.get_query_map().begin();
+                    it != queries.get_query_map().end(); ++it) { //browse each table of query map
+                if (result_status[it->first] == pg_handler::READY
+                        && result_futures[it->first].get() == 0) { //result ready
+                    std::cout << c_time_ << " [CM] RESULT READY FOR TABLE '"
+                            << it->first << " TO START INSERTION" << std::endl;
+                    sq->insert_data(it->first, all_data[it->first].first,
+                            all_data[it->first].second);
+                    //remove table reference before next iteration
+                    //delete_list.push_back(it);
+                    //it = m.erase(it)
+                    result_status[it->first] = pg_handler::INSERTED;
+                } else if (result_status[it->first] == pg_handler::INSERTED ||
+                           result_status[it->first] == pg_handler::ERRORED) {
+                    //skip
+                } else {
+                    std::cout << c_time_ << " [CM] RESULT NOT READY FOR TABLE '"
+                            << it->first << "' TO START INSERTION" << std::endl;
+                    loop_again = true;
+                }
             }
-        }
+            //sleep little
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        } while (loop_again);
 
         //dump in_memory dbto actual file
         sq->dump_db(dst_sq_database_);
