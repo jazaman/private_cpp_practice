@@ -31,13 +31,12 @@ query_builder::query_builder()
         {std::string("gpservice"), service_query},
         {std::string("death"), service_query},
         {std::string("clientmap"), clientmap_query},
+        {std::string("clientmap_extension"), clientmap_extn_query},
         {std::string("member"), member_query},
     }
 {}
 
-query_builder::~query_builder() {
-
-}
+query_builder::~query_builder() {}
 
 const std::string query_builder::get_query(const std::string& table_name) {
     std::string table_query = "";
@@ -45,7 +44,6 @@ const std::string query_builder::get_query(const std::string& table_name) {
     if(table != db_builder_queries_.end()) {
         table_query = search_replace_all(table->second, "<table_name>", table_name);
     }
-
     return table_query;
 }
 
