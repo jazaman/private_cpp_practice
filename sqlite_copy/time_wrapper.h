@@ -37,6 +37,10 @@ public:
         return tw;
     }
 
+private:
+    //time_wrapper();
+    //total_response.length()
+
     //TODO make all default, copy, assignment private
 };
 

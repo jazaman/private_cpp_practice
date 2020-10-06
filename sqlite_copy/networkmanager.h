@@ -19,7 +19,7 @@ public:
     network_manager(short _port, std::string &_sq_database);
     virtual ~network_manager();
     void server_loop();
-    void remove_dead_clients();
+    void remove_dead_clients(std::map<client_handler*, std::future<int>>& _results);
     //void set_port(short _port) {port_ = _port;};
     const unsigned short& get_port() const {return port_;};
 

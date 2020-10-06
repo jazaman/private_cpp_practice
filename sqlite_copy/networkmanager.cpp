@@ -31,12 +31,13 @@ void network_manager::server_loop()
 {
     tcp::acceptor a(io_service, tcp::endpoint(tcp::v4(), port_));
     //std::vector<std::thread> workers;
-    std::vector<std::future<int>> results;
+    std::map<client_handler*, std::future<int>> results;
     for (;;) //forever, server loop may need to install a signal to stop it gracefully
     {
         socket_ptr sock(new tcp::socket(io_service));
         auto cm (std::make_shared<client_handler>(sock, sq_database_));
         client_list.push_back(cm);
+
         a.accept(*sock);
         //TODO:Welcome client
         //boost::asio::write(*sock, boost::asio::buffer(std::string("Welcome TO SQLITE COPY\r\n")));
@@ -44,15 +45,32 @@ void network_manager::server_loop()
 
         //t.join();
         //check for closed connections and remove them
-        results.push_back(std::async(std::launch::async, &client_handler::session, cm));
-        remove_dead_clients();
+        //results.push_back(std::async(std::launch::async, &client_handler::session, cm));
+        results[cm.get()] = std::async(std::launch::async, &client_handler::session, cm);
+        std::cout << "TOTAL CONNECTED CLIENT: " << client_list.size() << std::endl;
+        remove_dead_clients(results);
     }
 }
 
-void network_manager::remove_dead_clients() {
+void network_manager::remove_dead_clients(std::map<client_handler*, std::future<int>>& _results) {
     //remove inactive clients
-    client_list.erase(std::remove_if(client_list.begin(), client_list.end(),
-            [](decltype (*client_list.begin()) &x){return !x->is_alive();}), //lamda - wish I could use auto
-            client_list.end());
+    for(auto clients = _results.begin(); clients != _results.end();) {
+        if (clients->first->get_status() == client_handler::DONE) {
+            clients->second.get();
+            _results.erase(clients++); //post iteration is important,
+        } else {
+            ++clients;
+        }
+    }
+
+    client_list.erase(
+        std::remove_if(
+            client_list.begin(), client_list.end(),
+            [](decltype (*client_list.begin()) &x) { //lamda - wish I could use auto
+                return !x->is_alive();
+            }
+        ),
+        client_list.end()
+    );
 }
 

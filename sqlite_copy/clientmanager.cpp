@@ -25,7 +25,8 @@ client_handler::client_handler(socket_ptr _socket, std::string &_sq_database)
   pg_(new pg_handler),
   socket_(_socket),
   c_time_(time_wrapper::get_timer()),
-  archive_file_{""}
+  archive_file_{""},
+  client_status_(e_status::WAITING)
 {}
 
 client_handler::~client_handler() {
@@ -111,7 +112,7 @@ bool client_handler::prepare_db(
     try {
         copy_file(sq_database_, dst_sq_database_); //copy the template database
         //clock the entire operation
-        clock_t t, final = clock();
+        clock_t final = clock();
         t_keyed_data all_data;
         std::vector<std::string> column_names, result_values;
         std::map<std::string, std::future<int>> result_futures;
@@ -122,12 +123,11 @@ bool client_handler::prepare_db(
         //create the sqlitehandler first
         std::shared_ptr<sqlite_handler> sq {std::make_shared<sqlite_handler>(dst_sq_database_)};
         for(auto it:queries.get_query_map()) { //browse each table of query map
-            t = clock();
+
             table_name = it.first;
             all_data[table_name] = std::make_pair(std::vector<std::string>(), std::vector<std::string>());
             //extract data from postgresql
             std::cout << c_time_ <<" Querying TABLE: " << table_name << std::endl;
-            //pg_->select_data(pg_database, table_name, providerid, column_names, result_values);
 
             /*pg_->select_data(pg_database, table_name, providerid,
                    all_data[table_name].first column names,
@@ -146,30 +146,8 @@ bool client_handler::prepare_db(
                     std::ref(result_status[table_name])   //query status
             );
 
-            /*result_status[table_name] = std::async(
-                                std::launch::async,
-                                &pg_handler::get_providerid, pg_, //the function and the object reference to call
-                                providerid, std::stoi(providerid), std::ref(column_names)
-                        );*/
-
-            //write it back to the sqlite database
-            //std::cout << c_time_ <<" Writing TABLE '" << table_name << std::endl;
-
-            /*sq->insert_data(
-                    //dst_sq_database_,
-                    table_name,
-                    all_data[table_name].first,
-                    all_data[table_name].second
-                    );*/
-
-            t = clock() - t;
-            std::cout << c_time_ <<" TABLE '" << table_name << "' took " << t <<" ticks and " \
-                    << (((float)t)/CLOCKS_PER_SEC) << " seconds" << std::endl;
-
-            //clear the holding vectors after each round
-            //result_values.clear();
-            //column_names.clear();
-            //if(i++> 3) break;
+            //As this asynchronous call to get the query result, we would need to
+            //poll to check when the result is back in the next block
         }
 
         bool loop_again;
@@ -183,11 +161,9 @@ bool client_handler::prepare_db(
                         && result_futures[it->first].get() == 0) { //result ready
                     std::cout << c_time_ << " [CM] RESULT READY FOR TABLE '"
                             << it->first << " TO START INSERTION" << std::endl;
+                    //insert into sqlite db and update the status
                     sq->insert_data(it->first, all_data[it->first].first,
                             all_data[it->first].second);
-                    //remove table reference before next iteration
-                    //delete_list.push_back(it);
-                    //it = m.erase(it)
                     result_status[it->first] = pg_handler::INSERTED;
                 } else if (result_status[it->first] == pg_handler::INSERTED ||
                            result_status[it->first] == pg_handler::ERRORED) {
@@ -228,7 +204,7 @@ int client_handler::session() {
 
     try
     {
-        for (;;)
+        for (;;) //TODO: SInce this is request response we may not need any loop here
         {
             char data[1024];
 
@@ -240,6 +216,7 @@ int client_handler::session() {
             else if (error)
                 throw boost::system::system_error(error); // Some other error.
 
+            client_status_ = e_status::PROCESSING;
             //parse the data to get the client details
             parse_header(data, length);
             providerid_ = request_details_["providerid"]; //unnecessary though
@@ -271,14 +248,21 @@ int client_handler::session() {
                         <h2>BAD REQUEST CHECK PARAMETERS AGAIN</h2>");
             }
 
-            boost::asio::write(*socket_, boost::asio::buffer(total_response.c_str(), total_response.length()));
+            size_t write_n = boost::asio::write(*socket_, boost::asio::buffer(total_response.c_str(), total_response.length()));
+
+            if (write_n != total_response.length()) { //check to see if correct amount of data is written back
+                std::cerr << c_time_ << " Failed to send data for  provider [" << providerid_ << "] " << std::endl;
+                client_status_ = e_status::ERROR;
+            } else {
+                client_status_ = e_status::DONE;
+            }
             clean_client();
             break; //end the loop
         }
     }
     catch (std::exception& e)
     {
-        std::cerr << "[CM] Exception in thread: " << e.what() << "\n";
+        std::cerr << c_time_ <<" [CM] Exception in thread: " << e.what() << "\n";
     }
     return 0;
 }

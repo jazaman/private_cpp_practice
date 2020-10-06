@@ -30,6 +30,8 @@ public:
     int session();
     bool is_alive();
     enum HTTP_HEADER {REQUEST_TYPE, REQUEST_PATH, VERSION, HOST }; //TODO: Not sure if I need this
+    enum e_status {WAITING, PROCESSING, DONE, ERROR };
+    e_status get_status() const {return client_status_;};
 private:
     std::string &sq_database_;
     std::shared_ptr<pg_handler> pg_;
@@ -41,6 +43,7 @@ private:
     std::string providers_db_;
     std::string providerid_;
     std::string archive_file_;
+    e_status client_status_;
 
 
     void copy_file(const std::string& src, const std::string& dst);
