@@ -131,7 +131,7 @@ private:
                 std::string("select distinct generatedid as healthid from clientmap inner join pd using (zillaid, upazilaid, unionid) ") +
                 std::string(") all_id on cm.generatedid = all_id.healthid ");
 
-    std::string client_map_extn_query = provider_group +
+    std::string clientmap_extn_query = provider_group +
         R"(
         select cme.* from clientmap_extension cme inner join ( 
             select distinct healthid from pregwomen inner join pd_all using (providerid) union 
@@ -150,7 +150,7 @@ private:
             select distinct healthid from gpservice inner join pd_all using (providerid) union 
             select distinct healthid from death inner join pd_all using (providerid) union 
             select distinct generatedid as healthid from clientmap inner join pd_all using (zillaid, upazilaid, unionid) 
-        ) all_id on cme.generatedid = all_id.healthid ;
+        ) all_id on cme.generated_id = all_id.healthid ;
 
         )";
 
