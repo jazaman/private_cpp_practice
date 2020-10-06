@@ -24,14 +24,19 @@ public:
     //using boost::asio::ip::tcp;
     typedef std::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr;
     typedef std::map<std::string, std::pair<std::vector<std::string>,std::vector<std::string>>> t_keyed_data;
+    enum HTTP_HEADER {REQUEST_TYPE, REQUEST_PATH, VERSION, HOST }; //TODO: Not sure if I need this
+    enum e_status {WAITING, PROCESSING, DONE, ERROR, TIMEOUT };
+    static const int TIMEOUT_PERIOD = 20;
+
     client_handler(socket_ptr _socket, std::string &_sq_database);
     virtual ~client_handler();
     //void session(socket_ptr _socket);
     int session();
     bool is_alive();
-    enum HTTP_HEADER {REQUEST_TYPE, REQUEST_PATH, VERSION, HOST }; //TODO: Not sure if I need this
-    enum e_status {WAITING, PROCESSING, DONE, ERROR };
     e_status get_status() const {return client_status_;};
+    void timeout() {std::cout << c_time_ << " TIMER EXPIRED FOR SOCK: 0x" << std::hex << socket_.get() << std::dec << std::endl;}
+    socket_ptr get_socket() const {return socket_;};
+
 private:
     std::string &sq_database_;
     std::shared_ptr<pg_handler> pg_;
@@ -51,6 +56,7 @@ private:
     void clean_client();
     bool prepare_db(const std::string& pg_database, const std::string& providerid);
     void parse_header(const char data[], size_t length);
+
 };
 
 #endif /* CLIENTWRAPPER_H_ */

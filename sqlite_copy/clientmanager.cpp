@@ -8,6 +8,7 @@
 #include <iostream>
 #include <boost/bind.hpp>
 #include <boost/smart_ptr.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <fcntl.h>   // open
 #include <unistd.h>  // read, write, close
 #include <cstdio>    // BUFSIZ
@@ -201,6 +202,21 @@ int client_handler::session() {
 
     std::string response_header {};
     std::string response_tail ("\r\r");
+    //start the timeout timer
+    boost::asio::io_service io;
+    boost::asio::deadline_timer timer{io,boost::posix_time::seconds(TIMEOUT_PERIOD)}; //20 sec
+    timer.async_wait(
+        [&](const boost::system::error_code& ec){
+           if (this->client_status_ == client_handler::WAITING) { //if still waiting to get data from client for TIMEOUT period
+               this->client_status_ = client_handler::TIMEOUT; //call timeout
+               std::cout << c_time_ << " TIMER EXPIRED FOR SOCK: " << std::hex << socket_.get() << std::dec << std::endl;
+               //this->socket_->close(); //and close
+           }
+        }
+    );
+    //timer.async_wait(std::bind(&client_handler::timeout, this));
+    //io.run();
+    std::future<void> timeout_time = std::async(std::launch::async,[&](){io.run();});
 
     try
     {
@@ -282,5 +298,6 @@ void client_handler::clean_client() {
     int db_err = std::remove(dst_sq_database_.c_str());
     if (error || archive_err || db_err) {
         std::cerr << "Client "<<providerid_<<" did not close cleanly... " << std::endl;
+        std::cerr << "IO: " << error << " FILE: " << db_err << " ZIP: " << archive_err << std::endl;
     }
 }

@@ -55,9 +55,12 @@ void network_manager::server_loop()
 void network_manager::remove_dead_clients(std::map<client_handler*, std::future<int>>& _results) {
     //remove inactive clients
     for(auto clients = _results.begin(); clients != _results.end();) {
-        if (clients->first->get_status() == client_handler::DONE) {
-            clients->second.get();
+        if (clients->first->get_status() == client_handler::DONE ) {
+            clients->second.get(); //finish the async task
             _results.erase(clients++); //post iteration is important,
+        } else if (clients->first->get_status() == client_handler::TIMEOUT) {
+                clients->first->get_socket()->close(); //finish the async task
+                _results.erase(clients++); //post iteration is important,
         } else {
             ++clients;
         }

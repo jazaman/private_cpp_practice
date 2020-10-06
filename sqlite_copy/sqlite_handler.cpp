@@ -363,5 +363,6 @@ int sqlite_handler::dump_db(const std::string& destination_db) {
     if((rc = sqlite3_errcode(destination))!= SQLITE_OK) {
         std::cerr << "Something Went Wrong RC: ["<< rc << "] :: "<< sqlite3_errmsg(destination);
     }
+    sqlite3_close(destination);
     return rc;
 }
