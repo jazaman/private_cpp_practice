@@ -12,7 +12,10 @@
 
 using boost::asio::ip::tcp;
 class client_handler;
-
+namespace std {
+template <class T>
+class future;
+}
 class network_manager {
 public:
     typedef std::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr;
