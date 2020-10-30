@@ -25,7 +25,7 @@ public:
     typedef std::shared_ptr<boost::asio::ip::tcp::socket> socket_ptr;
     typedef std::map<std::string, std::pair<std::vector<std::string>,std::vector<std::string>>> t_keyed_data;
     enum HTTP_HEADER {REQUEST_TYPE, REQUEST_PATH, VERSION, HOST }; //TODO: Not sure if I need this
-    enum e_status {WAITING, PROCESSING, DONE, ERROR, TIMEOUT };
+    enum e_status {INIT, WAITING, PROCESSING, DONE, ERROR, TIMEOUT };
     static const int TIMEOUT_PERIOD = 20;
 
     client_handler(socket_ptr _socket, std::string &_sq_database);

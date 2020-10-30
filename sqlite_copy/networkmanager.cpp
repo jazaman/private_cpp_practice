@@ -14,6 +14,10 @@
 #include "networkmanager.h"
 #include "clientmanager.h"
 
+#ifdef MCHECK
+#include <mcheck.h>
+#endif
+
 const int max_length = 1024;
 
 network_manager::network_manager(short _port, std::string &_sq_database)
@@ -29,10 +33,18 @@ network_manager::~network_manager() {
 
 void network_manager::server_loop()
 {
+#ifdef MCHECK
+//mtrace();
+#endif
     tcp::acceptor a(io_service, tcp::endpoint(tcp::v4(), port_));
     //std::vector<std::thread> workers;
     std::map<client_handler*, std::future<int>> results;
+
+#ifdef MCHECK
+    for (int i = 0 ;i < 2; i++) //forever, server loop may need to install a signal to stop it gracefully
+#else
     for (;;) //forever, server loop may need to install a signal to stop it gracefully
+#endif
     {
         socket_ptr sock(new tcp::socket(io_service));
         auto cm (std::make_shared<client_handler>(sock, sq_database_));
@@ -55,7 +67,12 @@ void network_manager::server_loop()
 void network_manager::remove_dead_clients(std::map<client_handler*, std::future<int>>& _results) {
     //remove inactive clients
     for(auto clients = _results.begin(); clients != _results.end();) {
-        if (clients->first->get_status() == client_handler::DONE ) {
+        if (
+            clients->first->get_status() == client_handler::DONE 
+#ifdef MCHECK
+            || clients->first->get_status() == client_handler::INIT
+#endif 
+        ) {
             clients->second.get(); //finish the async task
             _results.erase(clients++); //post iteration is important,
         } else if (clients->first->get_status() == client_handler::TIMEOUT) {

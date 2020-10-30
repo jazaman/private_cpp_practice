@@ -26,6 +26,12 @@ else
 	DEBUG_FLAG=
 endif
 	
+ifeq ($(MCHECK),1)
+	DEBUG_FLAG=-g -DMCHECK
+else
+	DEBUG_FLAG=
+endif
+
 ifdef LIB_DIR
         override LIBDIR_FLAG=-L
 else

@@ -79,7 +79,11 @@ private:
             union 
             select distinct generatedid as healthid 
             from clientmap inner join pd_all using (zillaid, upazilaid, unionid) 
-        ) service_all using (healthid); 
+        ) service_all using (healthid) 
+#ifdef MCHECK
+        limit 10
+#endif
+        ; 
         )";
 
     std::string clientmap_query = provider_group +
@@ -101,7 +105,11 @@ private:
             select distinct healthid from gpservice inner join pd_all using (providerid) union 
             select distinct healthid from death inner join pd_all using (providerid) union 
             select distinct generatedid as healthid from clientmap inner join pd_all using (zillaid, upazilaid, unionid) 
-        ) all_id on cm.generatedid = all_id.healthid ;
+        ) all_id on cm.generatedid = all_id.healthid
+#ifdef MCHECK
+        limit 10
+#endif
+;
 
         )";
 
@@ -150,7 +158,11 @@ private:
             select distinct healthid from gpservice inner join pd_all using (providerid) union 
             select distinct healthid from death inner join pd_all using (providerid) union 
             select distinct generatedid as healthid from clientmap inner join pd_all using (zillaid, upazilaid, unionid) 
-        ) all_id on cme.generated_id = all_id.healthid ;
+        ) all_id on cme.generated_id = all_id.healthid 
+#ifdef MCHECK
+        limit 10
+#endif
+        ;
 
         )";
 
@@ -175,7 +187,13 @@ private:
             select distinct healthid from gpservice inner join pd_all using (providerid) union 
             select distinct healthid from death inner join pd_all using (providerid) union 
             select distinct generatedid as healthid from clientmap inner join pd_all using (zillaid, upazilaid, unionid) 
-        ) all_id on cm.generatedid = all_id.healthid;
+        ) all_id on cm.generatedid = all_id.healthid 
+
+#ifdef MCHECK
+        limit 10
+#endif
+        ;
+
 
         )";
 
@@ -216,7 +234,11 @@ private:
         select distinct healthid from pncservicechild inner join pd_all using (providerid) union 
         select distinct healthid from pacservice inner join pd_all using (providerid) union 
         select distinct generatedid as healthid from clientmap inner join pd_all using (zillaid, upazilaid, unionid) 
-        ) all_id using(healthid); 
+        ) all_id using(healthid) 
+#ifdef MCHECK
+        limit 10
+#endif
+       ;
 
         )";
 
