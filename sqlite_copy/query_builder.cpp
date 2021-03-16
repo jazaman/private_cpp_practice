@@ -5,7 +5,7 @@
  *      Author: jamil.zaman
  */
 #include "query_builder.h"
-#include <sstream>
+#include <sstream> 
 
 query_builder::query_builder()
     : db_builder_queries_{

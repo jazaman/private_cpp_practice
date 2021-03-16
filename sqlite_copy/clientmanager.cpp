@@ -27,7 +27,7 @@ client_handler::client_handler(socket_ptr _socket, std::string &_sq_database)
   socket_(_socket),
   c_time_(time_wrapper::get_timer()),
   archive_file_{""},
-  client_status_(e_status::WAITING)
+  client_status_(e_status::INIT)
 {}
 
 client_handler::~client_handler() {
@@ -209,6 +209,7 @@ int client_handler::session() {
     //start the timeout timer
     boost::asio::io_service io;
     boost::asio::deadline_timer timer{io,boost::posix_time::seconds(TIMEOUT_PERIOD)}; //20 sec
+    client_status_ = client_handler::WAITING;
     timer.async_wait(
         [&](const boost::system::error_code& ec){
            if (this->client_status_ == client_handler::WAITING) { //if still waiting to get data from client for TIMEOUT period

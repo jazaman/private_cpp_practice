@@ -71,7 +71,7 @@ sqlite_handler::sqlite_handler(const std::string& sq_database)
 }
 
 sqlite_handler::~sqlite_handler() {
-    sqlite3_close(template_db_);
+    //sqlite3_close(template_db_);
     sqlite3_close(inmemorydb_);
 }
 
