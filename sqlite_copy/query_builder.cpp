@@ -33,6 +33,8 @@ query_builder::query_builder()
         {std::string("clientmap"), clientmap_query},
         {std::string("clientmap_extension"), clientmap_extn_query},
         {std::string("member"), member_query},
+        {std::string("child_care_service"), service_query},
+        {std::string("child_care_service_detail"), child_care_service_details}
     }
 {}
 

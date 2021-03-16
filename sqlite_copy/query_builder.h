@@ -237,6 +237,21 @@ private:
             std::string("select distinct generatedid as healthid from clientmap inner join pd using (zillaid, upazilaid, unionid) ") +
             std::string(") all_id using(healthid) ");
 
+    std::string child_care_service_details =
+        R"(
+            select ccsd.* from (
+                select ccs.* from (
+                    with pd as (select zillaid, upazilaid, unionid from providerdb where providerid = $1 and active = 1)
+                    select distinct healthid from child_care_service where providerid = $1
+                    UNION
+                    select generatedid as healthid from clientmap inner join pd using (zillaid, upazilaid, unionid)
+                    order by healthid
+                ) sq inner join child_care_service as ccs using (healthid)
+            order by healthid, systementrydate
+            ) as ccs
+            inner join child_care_service_detail as ccsd on ccs.healthid = ccsd.healthid and ccs.systementrydate = ccsd.entrydate;
+        )";
+
     std::string db_selection_query =
                 std::string("select format('RHIS_%1s_%s', zillaid, LPAD(upazilaid::text, 2, '0')) ") +
                 std::string("as db from providerdb where providerid = $1");
