@@ -17,6 +17,7 @@
 #include <sstream>
 #include <iterator>
 #include "configmanager.h"
+#include "time_wrapper.h"
 
 std::string demangle(const char* name) {
 
@@ -35,7 +36,10 @@ using namespace std;
 //using namespace pqxx;
 //template <typename T> std::string type_name();
 
-pg_handler::pg_handler(): cm(config_manager::instance("")) {}
+pg_handler::pg_handler()
+    : cm(config_manager::instance("")),
+      c_time_(time_wrapper::get_timer())
+{}
 
 int pg_handler::create_table (int argc, char* argv[]) {
     std::string sql;
@@ -189,7 +193,7 @@ int pg_handler::select_data(
             std::copy(c.begin(), c.end, std::ostream_iterator<const char*>(imploded_values, delim));
         }*/
 
-        cout << "QUERY COMPLETED, FETCHED "<< result_values.size()<< " RECORDS FOR " << table_name << endl;
+        cout << c_time_ <<"QUERY COMPLETED, FETCHED "<< result_values.size()<< " RECORDS FOR " << table_name << endl;
         query_status = table_status::READY; //indicating query ended
         conn.disconnect ();
     } catch (const std::exception &e) {
@@ -235,6 +239,8 @@ const std::string pg_handler:: get_providers_db(const std::string _providerid) {
 
         if(it != R.end()) {
             selected_db = it["db"].c_str();
+            //TODO: Temporary hack for Arafat
+            selected_db = "RHIS_36_71_DEV";
         } else {
             std::cout << "ERROR: provider do not exist" << std::endl;
             selected_db = "ERROR";

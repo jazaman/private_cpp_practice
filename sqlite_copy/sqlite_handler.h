@@ -13,6 +13,7 @@
 
 
 class sqlite3;
+class time_wrapper;
 class sqlite_handler {
 
 public:
@@ -31,6 +32,7 @@ private:
     const std::string sq_database_;
     sqlite3* template_db_;
     sqlite3* inmemorydb_;
+    time_wrapper& c_time_;
     static int process_ddl_row(void * pData, int nColumns, char **values, char **columns);
     static int process_dml_row(void *pData, int nColumns, char **values, char **columns);
     void load_memory_db();

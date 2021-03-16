@@ -18,12 +18,12 @@
 #include <sstream>
 #include <iterator>
 #include <sqlite3.h>
+#include "time_wrapper.h"
 
 
 //template <typename T> std::string type_name();
 
 //TODO: move this separate utility namespace
-
 std::string container_to_string(const std::vector<std::string>& column_names, const char* delim) {
     std::ostringstream imploded;
     std::copy(column_names.begin(), column_names.end(),
@@ -32,7 +32,6 @@ std::string container_to_string(const std::vector<std::string>& column_names, co
     std::string columns = imploded.str();
     size_t pos;
     if((pos = columns.find_last_of(",")) != std::string::npos) {
-
         columns.erase(pos);
     }
     return columns;
@@ -47,7 +46,8 @@ int callback(void* notUsed, int argc, char* argv[], char* columns[]) {
 }
 
 sqlite_handler::sqlite_handler(const std::string& sq_database)
-    : sq_database_(sq_database) {
+    : sq_database_(sq_database),
+      c_time_(time_wrapper::get_timer()){
     try {
         /* Open database */
         int rc = sqlite3_open(sq_database.c_str(), &template_db_);
@@ -135,32 +135,40 @@ int sqlite_handler::insert_data(
     int rc, row_count = 0;
     char *zErrMsg = 0;
     try {
-        /* Open database */
-        /*rc = sqlite3_open(sq_database.c_str(), &db);
 
-        if( rc ) {
-            fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-            return(0);
-        } else {
-            fprintf(stdout, "SQLITE INSERT:: database:'%s' table:'%s'\n", sq_database.c_str(), sq_table.c_str());
-        }*/
-
+        int iteration = 0;
         for(auto rows = data.begin();rows != data.end();) {
+
             sql = sql + "( " + *rows + "), ";
-            if(++rows == data.end() || (++row_count % 500) == 0 ) //every 500 row data must be inserted, SQLITE limitation
-                     //every 500 row data must be inserted, SQLITE limitation
+            if(++rows == data.end() || (++row_count % 500) == 0)
+            //MAX 500 row data can be inserted at once, SQLITE limitation
             {
                 size_t pos;
-                if((pos = sql.find_last_of(",")) != std::string::npos) {
+                if((pos = sql.find_last_of(",")) != std::string::npos) { //Get rid of the last comma
                     sql.erase(pos);
+                }
+
+                //TODO - DEBUG - DELETE
+                if(sq_table.compare("child_care_service_detail") == 0) {
+                    std::cout <<"INSERT SQL: " << (base_sql+sql) << std::endl;
                 }
                 //sql.erase(sql.find_last_of(","));
                 sqlite3_prepare_v2(inmemorydb_, (base_sql+sql).c_str(), -1, &stmt, 0);
                 rc = sqlite3_exec(inmemorydb_, "BEGIN TRANSACTION", 0, 0, 0);
 
                 if((rc = sqlite3_step(stmt)) != SQLITE_DONE) {
-                    std::cerr << "RC: ["<< rc << "] :: "<< sqlite3_errmsg(inmemorydb_);
+                    std::cerr << c_time_ << "[SQLITE INSERT] TABLE " << sq_table<< " ERROR RC: ["<< rc << "] :: "<< sqlite3_errmsg(inmemorydb_) << " iteration: " << ++iteration <<std::endl;
+                    std::cerr << " ================== " << std::endl << sql << std::endl<< "=============================" << std::endl;
                 }
+
+                else {
+                    std::cerr << c_time_ << "[SQLITE INSERT] TABLE " << sq_table<< " iteration: " << ++iteration << " row count: " << row_count <<std::endl;
+#ifdef DEBUG
+                    std::cerr << " ================== " << std::endl << sql << std::endl<< "=============================" << std::endl;
+#endif
+                }
+
+
 
                 rc = sqlite3_exec(inmemorydb_, "END TRANSACTION", 0, 0, 0);
                 rc = sqlite3_finalize( stmt );
@@ -176,7 +184,8 @@ int sqlite_handler::insert_data(
                 sql = "";
             }
         }
-        fprintf(stdout, "SQLITE INSERT: Total %d Records created successfully for '%s' table\n", row_count, sq_table.c_str());
+        //fprintf(stdout, "SQLITE INSERT: Total %d Records created successfully for '%s' table\n", row_count, sq_table.c_str());
+        std::cout << c_time_ << "[SQLITE INSERT] " << ++row_count << " Records created successfully for " << sq_table << std::endl;
 
 #ifdef DEBUG
         std::cout <<"INSERT SQL: " << sql << std::endl;
@@ -188,15 +197,6 @@ int sqlite_handler::insert_data(
     }
 
     /* Create SQL statement */
-    /*sql = "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) "  \
-            "VALUES (1, 'Paul', 32, 'California', 20000.00 ); " \
-            "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) "  \
-            "VALUES (2, 'Allen', 25, 'Texas', 15000.00 ); "     \
-            "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY)" \
-            "VALUES (3, 'Teddy', 23, 'Norway', 20000.00 );" \
-            "INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY)" \
-            "VALUES (4, 'Mark', 25, 'Rich-Mond ', 65000.00 );";*/
-
     //sqlite3_close(db);
 
     return SQLITE_OK;

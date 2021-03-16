@@ -12,6 +12,7 @@
 #include "query_builder.h"
 
 class config_manager;
+class time_wrapper;
 
 class pg_handler {
 
@@ -33,6 +34,7 @@ public:
 private:
     query_builder query;
     config_manager& cm;
+    time_wrapper& c_time_;
 
 };
 #endif /* SQLITE_COPY_PG_HANDLER_H_ */

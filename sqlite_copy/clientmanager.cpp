@@ -110,6 +110,10 @@ bool client_handler::prepare_db(
     dst_sq_database_ = providerid + ".sqlite3";
     archive_file_ = providerid + ".zip";
 
+    //may return 0 when not able to detect
+    const auto processor_count = std::thread::hardware_concurrency() ? std::thread::hardware_concurrency() :  2;
+    //defaults to 2 thread if unable to detect
+
     try {
         copy_file(sq_database_, dst_sq_database_); //copy the template database
         //clock the entire operation
@@ -232,7 +236,8 @@ int client_handler::session() {
             else if (error)
                 throw boost::system::system_error(error); // Some other error.
 
-            client_status_ = e_status::PROCESSING;
+            client_status_ = e_status::PROCESSING; //set the status as progressing
+
             //parse the data to get the client details
             parse_header(data, length);
             providerid_ = request_details_["providerid"]; //unnecessary though
@@ -240,14 +245,16 @@ int client_handler::session() {
             providers_db_ = pg_->get_providers_db(providerid_);
 
             std::cout << c_time_ << "User -> " << providerid_ << " db -> " << providers_db_ <<std::endl;
+
             //TODO: Need authentication code to check for valid request
-            //boost::asio::write(*socket_, boost::asio::buffer(data, length));
 
             std::string total_response {};
+
             if (providers_db_.compare("ERROR") && //0 if true - if provider does not exist
-                prepare_db(providers_db_, providerid_)) { //SUCCESS
+                prepare_db(providers_db_, providerid_)) { //SUCCESS -- prepare the DB for the connected  client
+
                 std::ifstream ifs(archive_file_);
-                std::string str(std::istreambuf_iterator<char>{ifs}, {});
+                std::string str(std::istreambuf_iterator<char>{ifs}, {}); // read the file
                 response_header = std::string(
                         "HTTP/1.1 200 OK\r\n\
                          Connection: Closed \
@@ -294,7 +301,8 @@ void client_handler::clean_client() {
     socket_->shutdown(boost::asio::ip::tcp::socket::shutdown_both, error);
     socket_->close(error);
 
-    int archive_err = std::remove(archive_file_.c_str());
+    //TODO - Remove the following comment
+    int archive_err = 0;//std::remove(archive_file_.c_str());
     int db_err = std::remove(dst_sq_database_.c_str());
     if (error || archive_err || db_err) {
         std::cerr << "Client "<<providerid_<<" did not close cleanly... " << std::endl;
