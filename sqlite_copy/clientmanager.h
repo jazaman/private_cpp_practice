@@ -17,6 +17,7 @@
 
 class pg_handler;
 class sqlite_handler;
+class config_manager;
 
 
 class client_handler {
@@ -49,6 +50,7 @@ private:
     std::string providerid_;
     std::string archive_file_;
     e_status client_status_;
+    config_manager& cm_;
 
 
     void copy_file(const std::string& src, const std::string& dst);

@@ -45,6 +45,7 @@ public:
     config_manager & operator=(config_manager &&) = delete;
     const unsigned int& port() {return port_;};
     const unsigned int& db_port() {return db_port_;};
+    const unsigned int& thread_multiplier() {return thread_multiplier_;};
     const std::string& address() const {return address_;};
     const std::string& password() const {return password_;};
     const std::string& user() const {return user_;};
@@ -61,6 +62,7 @@ private:
     std::string address_;
     unsigned int port_;
     unsigned int db_port_;
+    unsigned int thread_multiplier_;
     std::string password_;
     std::string user_;
     std::string db_type_;

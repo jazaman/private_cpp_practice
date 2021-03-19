@@ -140,29 +140,32 @@ int sqlite_handler::insert_data(
         for(auto rows = data.begin();rows != data.end();) {
 
             sql = sql + "( " + *rows + "), ";
-            if(++rows == data.end() || (++row_count % 500) == 0)
             //MAX 500 row data can be inserted at once, SQLITE limitation
-            {
+            ++row_count;
+            if(++rows == data.end() || (row_count % 500) == 0) {
+
                 size_t pos;
                 if((pos = sql.find_last_of(",")) != std::string::npos) { //Get rid of the last comma
                     sql.erase(pos);
                 }
 
                 //TODO - DEBUG - DELETE
+/*
                 if(sq_table.compare("child_care_service_detail") == 0) {
                     std::cout <<"INSERT SQL: " << (base_sql+sql) << std::endl;
                 }
-                //sql.erase(sql.find_last_of(","));
+*/
+
                 sqlite3_prepare_v2(inmemorydb_, (base_sql+sql).c_str(), -1, &stmt, 0);
                 rc = sqlite3_exec(inmemorydb_, "BEGIN TRANSACTION", 0, 0, 0);
 
                 if((rc = sqlite3_step(stmt)) != SQLITE_DONE) {
-                    std::cerr << c_time_ << "[SQLITE INSERT] TABLE " << sq_table<< " ERROR RC: ["<< rc << "] :: "<< sqlite3_errmsg(inmemorydb_) << " iteration: " << ++iteration <<std::endl;
+                    std::cerr << c_time_ << "[SQ] TABLE " << sq_table<< " ERROR RC: ["<< rc << "] :: "<< sqlite3_errmsg(inmemorydb_) << " iteration: " << ++iteration <<std::endl;
                     std::cerr << " ================== " << std::endl << sql << std::endl<< "=============================" << std::endl;
                 }
 
                 else {
-                    std::cerr << c_time_ << "[SQLITE INSERT] TABLE " << sq_table<< " iteration: " << ++iteration << " row count: " << row_count <<std::endl;
+                    std::cout << c_time_ << "[SQ] TABLE " << sq_table<< " iteration: " << ++iteration << " row count: " << row_count <<std::endl;
 #ifdef DEBUG
                     std::cerr << " ================== " << std::endl << sql << std::endl<< "=============================" << std::endl;
 #endif
@@ -185,7 +188,7 @@ int sqlite_handler::insert_data(
             }
         }
         //fprintf(stdout, "SQLITE INSERT: Total %d Records created successfully for '%s' table\n", row_count, sq_table.c_str());
-        std::cout << c_time_ << "[SQLITE INSERT] " << ++row_count << " Records created successfully for " << sq_table << std::endl;
+        std::cout << c_time_ << "[SQ] " << row_count << " Records created successfully for " << sq_table << std::endl;
 
 #ifdef DEBUG
         std::cout <<"INSERT SQL: " << sql << std::endl;

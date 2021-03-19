@@ -37,7 +37,7 @@ T read_as(ptree const& pt) {
 
 
 config_manager::config_manager(const std::string& _config_file)
-    : address_{""}, port_{0}, password_{""}, db_type_{""} {
+    : address_{""}, port_{0}, thread_multiplier_{1}, password_{""}, db_type_{""} {
     //read the config file and load properties
     std::ifstream ifs(_config_file);
     std::istringstream iss(std::string(std::istreambuf_iterator<char>{ifs},{}));
@@ -52,6 +52,7 @@ config_manager::config_manager(const std::string& _config_file)
     user_ = config.get<std::string>("database.user");
     db_type_ = config.get<std::string>("database.type");
     port_ = config.get<int>("application.port");
+    thread_multiplier_ = config.get<int>("application.thread_multiplier");
 
     /*
     std::map<std::string, Object> parsed;

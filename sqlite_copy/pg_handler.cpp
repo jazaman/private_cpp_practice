@@ -128,7 +128,7 @@ int pg_handler::select_data(
         pqxx::connection conn("dbname = "+ db_name +" user = "+cm.user()+" password = "
                 + cm.password()+" hostaddr = " + cm.address() + " port = " + std::to_string(cm.db_port()));
         if (conn.is_open()) {
-            cout << "Opened database successfully: " << conn.dbname()<< " for table: " << table_name << endl;
+            cout << c_time_ << "[PG] Opened database successfully: " << conn.dbname()<< " for table: " << table_name << endl;
         } else {
             cout << "Can't open database" << endl;
             return 1;
@@ -193,7 +193,7 @@ int pg_handler::select_data(
             std::copy(c.begin(), c.end, std::ostream_iterator<const char*>(imploded_values, delim));
         }*/
 
-        cout << c_time_ <<"QUERY COMPLETED, FETCHED "<< result_values.size()<< " RECORDS FOR " << table_name << endl;
+        cout << c_time_ <<"[PG] QUERY COMPLETED, FETCHED "<< result_values.size()<< " RECORDS FOR " << table_name << endl;
         query_status = table_status::READY; //indicating query ended
         conn.disconnect ();
     } catch (const std::exception &e) {
