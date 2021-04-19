@@ -16,6 +16,7 @@
 #include <chrono>       // std::chrono::system_clock
 #include <sys/time.h>
 #include <string>
+#include <thread>
 
 class time_wrapper {
 public:
@@ -27,7 +28,10 @@ public:
         if(0 < strftime(foo, sizeof(foo), "%F_%X", localtime(&tt))) {
             //output << std::put_time(std::localtime(&tt),"[%F_%X] ");
             gettimeofday(&milsec, nullptr);
-            output << "[" << std::string(foo) + "." +  std::to_string(milsec.tv_usec/1000) << "]" ;
+            output
+                   << std::hex << "[" << std::this_thread::get_id()<< "]"
+                   << std::dec << "[" << std::string(foo) + "." +  std::to_string(milsec.tv_usec/1000) << "]"
+                   ;
         }
         return output;
     }

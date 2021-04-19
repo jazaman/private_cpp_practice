@@ -22,12 +22,20 @@
 #include "configmanager.h"
 
 
+template<typename R>
+bool is_ready(std::future<R> const& f) {
+    //std::cout << "Future status"
+    return f.wait_for(std::chrono::milliseconds(100)) == std::future_status::ready;
+}
+
 client_handler::client_handler(socket_ptr _socket, std::string &_sq_database)
 : sq_database_(_sq_database),
   pg_(new pg_handler),
   socket_(_socket),
   c_time_(time_wrapper::get_timer()),
-  archive_file_{""},
+  providers_db_{},
+  providerid_{},
+  archive_file_{},
   client_status_(e_status::INIT),
   cm_(config_manager::instance(""))
 {}
@@ -123,31 +131,32 @@ bool client_handler::prepare_db(
         t_keyed_data all_data;
         std::vector<std::string> column_names, result_values;
         std::map<std::string, std::future<int>> result_futures;
+        std::map<std::string, std::future<int>> sq_write_response;
         std::map<std::string, pg_handler::table_status> result_status;
         query_builder queries;
-        int i = 0, max_thread = processor_count * cm_.thread_multiplier(), thread_count = 0;
-        std::string table_name = "";
+        int i = 0, max_thread = processor_count * cm_.thread_multiplier(), reader_thread_count = 0, result_ok = -1;
+        std::string table_name = "", w_table {}, r_message {};
         //create the sqlitehandler first
         std::shared_ptr<sqlite_handler> sq {std::make_shared<sqlite_handler>(dst_sq_database_)};
 
         std::cout << c_time_ << "[CM] HARDWARE CONCURRENCY: " << processor_count
                   << " MAX THREAD: " << max_thread << std::endl;
-        // for(auto it:queries.get_query_map()) { //browse each table of query map
-        auto it = queries.get_query_map().begin();
-        do {
 
+        bool writer_thread_idle = true, end_reached {}, r_data_available {};
+        //hold writing threads response
+        int l_cnt = 0; //for debugging only
+
+        auto it = queries.get_query_map().begin();
+        //this loop will browse through all the tables listed in query map
+        do {
             table_name = it->first;
             //initializing column and result vector
             all_data[table_name] = std::make_pair(std::vector<std::string>(), std::vector<std::string>());
             //extract data from postgresql
             std::cout << c_time_ <<"[CM] Querying TABLE: " << table_name << std::endl;
 
-            /*pg_->select_data(pg_database, table_name, providerid,
-                   all_data[table_name].first column names,
-                    all_data[table_name].secondresult values);
-             */
-
             result_status[table_name] = pg_handler::NOT_READY; //initiating with not ready
+            //launching reading tread
             result_futures[table_name] = std::async(
                     std::launch::async,
                     &pg_handler::select_data, pg_, //the function and the object reference to call
@@ -158,55 +167,102 @@ bool client_handler::prepare_db(
                     std::ref(all_data[table_name].second),//result values,
                     std::ref(result_status[table_name])   //query status
             );
-            ++thread_count; //increment thread counter after launching async
+            ++reader_thread_count; //increment thread counter after launching async
             ++it; //Increment the query map iterator to go to next table space
-            int result_ok = -1;
-            bool end_reached = (it == queries.get_query_map().end());
+            end_reached = (it == queries.get_query_map().end());
 
-            // this loop begins when launching thread limit is reached
+            // this loop begins when reading thread limit is reached
             // and continue till at least one thread fetched some data
-            while (thread_count == max_thread || end_reached) {
+            while ( reader_thread_count == max_thread || end_reached ) {
+                ++l_cnt;
                 //browse through the launched task to see which one finished
+                r_data_available = false;
                 for(auto result_it = result_status.begin(); result_it != result_status.end(); ) {
                     //result status map {table_name, result_status}
-                    if( result_it->second == pg_handler::READY && //result ready, reading thread completed
-                        result_futures[result_it->first].get() == 0 //result available, required to call this
-                                                             //to ensure async thread execution
-                      ) {
-                        std::cout << c_time_ << "[CM] RESULTS READY FOR TABLE '"
+                    if( result_it->second == pg_handler::READY) {
+                        std::cout << c_time_ <<l_cnt <<" " << "[CM] [R_ST] RESULTS READY FOR TABLE '"
                                   << result_it->first << "' TO START INSERTION" << std::endl;
-                        //TODO: Consider launching sqlite writer asynchronously
-                        // insert the data in sqlite3 file/db
-                        result_ok = sq->insert_data(
-                            result_it->first, //table name
-                            all_data[result_it->first].first, //column names
-                            all_data[result_it->first].second //data values
-                        );
 
-                        if(result_ok != 0) {
-                            std::cerr <<c_time_ << "[CM] failed to write table " << result_it->first << std::endl;
-                        } else {
-                            --thread_count; //decrement active thread count and
-                                            //make available thread space for next operation
-                            result_it->second = pg_handler::INSERTED;
-                            //remove the table name from map whose data is already inserted
-                            result_status.erase(result_it++); //post increment is critical correct element deletion
+                        r_data_available = true; //set read data available for this cycle true
+                        if(writer_thread_idle && //launch data writer if it is sitting idle
+                           result_futures[result_it->first].get() == 0) { //call async get to for the read data
+                            //;
+                            std::cout << c_time_ << "[CM] LAUNCHING WRITE THREAD FOR TABLE '" << result_it->first << "' " <<std::endl;
+                            result_it->second = pg_handler::WRITING; //set status
+                            sq_write_response[result_it->first] = std::async(
+                                    std::launch::async,
+                                    &sqlite_handler::insert_data, sq, //write function and ppointer to call it
+                                    result_it->first, //table name
+                                    all_data[result_it->first].first, //column names
+                                    all_data[result_it->first].second, //data values
+                                    std::ref(result_it->second)
+                            );
+
+                            writer_thread_idle = false; //unset thread busy flag
+                            --reader_thread_count; //decrement active thread count and
+                            //make available thread space for next operation
+                            w_table = result_it->first; //keep reference of the writing table
                         }
-                    } else {
-                        std::cout << c_time_ << "[CM] RESULT NOT READY FOR TABLE '"
-                                << result_it->first << "' TO START INSERTION" << std::endl;
-                        ++result_it; //check the next one
+                    } else { //data not ready
+                        switch(result_it->second) {
+                            case pg_handler::WRITING: r_message = "[CM] [R_ST] RESULT WRITING IN PROGRESS FOR TABLE '"; break;
+                            case pg_handler::INSERTED: r_message = "[CM] [R_ST] RESULT WRITTEN FOR TABLE '"; break;
+                            case pg_handler::READY: r_message = "[CM] [R_ST] RESULT READY FOR WRITING FOR TABLE '"; break; //this one would never come
+                            case pg_handler::NOT_READY: r_message = "[CM] [R_ST] RESULT NOT READY FOR TABLE '"; break;
+                            case pg_handler::ERRORED: r_message = "[CM] [R_ST] RESULT ERRORED FOR TABLE '"; break;
+                            default:r_message = "[CM] [R_ST] something terribly wrong"; break;
+                        }
+                        //r_message = (result_it->second == pg_handler::WRITING) ?
+                        //        "[CM] RESULT IN WRITING FOR TABLE '" : "[CM] RESULT NOT READY FOR INSERTION FOR TABLE '" ;
+                        std::cout << c_time_ <<l_cnt <<" "<< r_message << result_it->first << "'" << std::endl;
+                    }
+
+                    ++result_it; //move the read pointer check the next one
+
+                    //TODO - May consider moving the whole block outside reading loop
+                    if(!writer_thread_idle && w_table.compare("") ) {
+                        std::cout << c_time_ << "[CM] CHECK DATA WRITING COMPLETED FOR TABLE '" << w_table << "' " <<std::endl;
+
+                        if(is_ready(sq_write_response[w_table]) && //wait 100 msec to see if the write results are ready
+                           result_status.find(w_table)->second == pg_handler::INSERTED) //precautionary double check no really required
+                        {
+                            writer_thread_idle = true;
+
+                            if( (result_ok = sq_write_response[w_table].get()) != 0) {
+                                std::cerr <<c_time_ << "[CM] failed to write table " << w_table << std::endl;
+                            } else {
+                                auto w_it = result_status.find(w_table);
+                                std::cout << c_time_ << "[CM] DATA WRITING COMPLETED FOR TABLE '" << w_table << "' " <<std::endl;
+                                w_it->second = pg_handler::INSERTED;
+
+                                if (result_it == w_it) {
+                                    //if the read pointer is pointing to the same object
+                                    //before deleting the reference need to move the read pointer to the next
+                                    ++result_it;
+                                }
+                                //remove the table name from map whose data is already inserted
+                                result_status.erase(w_it); //post increment is critical correct element deletion
+                                w_table = "";
+                            }
+                        } else if (reader_thread_count < max_thread && !end_reached) {
+                            //break the writing loop as the write is bz, and
+                            //if reader thread idle (reader_thread < max_thread) it can continue to fetch
+                            std::cout << c_time_ << "[CM] WRITING THREAD BUSY, READER THREAD IDLE" << std::endl;
+                            break;
+                        } else {
+                            std::cout << c_time_ << "[CM] WRITING THREAD BUSY, READER THREAD ALL FULL, NAP TIME " << std::endl;
+                        }
                     }
                 } //END RESULT BROWSING FOR LOOP
 
                 //TODO Consider deletion of the next block
-                if (thread_count == max_thread || end_reached) {
+                if ((reader_thread_count == max_thread && !r_data_available)|| end_reached) {
                     //when none of the launched thread finished their execution
                     //sleep little
                     std::cout << c_time_
-                            << "[CM] NONE OF THE READING THREADS ARE READY. TAKING SHORT NAP"
+                            << "[CM] NONE OF THE READ THREADS ARE READY, WRITE THREAD IDLE. TAKING SHORT NAP"
                             << std::endl;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(250));
                 }
 
                 if(end_reached && result_status.empty()) { //all the table is processed no more data left
@@ -217,35 +273,6 @@ bool client_handler::prepare_db(
             } //END OF DATA WRITING LOOP
         } while( it != queries.get_query_map().end()); // as long as there is running thread
         //END OF DATA READING LOOP
-
-        /*bool loop_again;
-        //vector of map iterators
-        //std::vector<decltype(queries.get_query_map().begin())> delete_list;
-        do {
-            loop_again = false;
-            for (auto it = queries.get_query_map().begin();
-                    it != queries.get_query_map().end(); ++it) { //browse each table of query map
-                if (result_status[it->first] == pg_handler::READY
-                        && result_futures[it->first].get() == 0) { //result ready
-                    std::cout << c_time_ << " [CM] RESULT READY FOR TABLE '"
-                            << it->first << " TO START INSERTION" << std::endl;
-                    //insert into sqlite db and update the status
-                    sq->insert_data(it->first, all_data[it->first].first,
-                            all_data[it->first].second);
-                    result_status[it->first] = pg_handler::INSERTED;
-                } else if (result_status[it->first] == pg_handler::INSERTED ||
-                           result_status[it->first] == pg_handler::ERRORED) {
-                    //skip
-                } else {
-                    std::cout << c_time_ << " [CM] RESULT NOT READY FOR TABLE '"
-                            << it->first << "' TO START INSERTION" << std::endl;
-                    loop_again = true;
-                }
-            }
-            //sleep little
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        } while (loop_again);*/
-
         //dump in_memory dbto actual file
         sq->dump_db(dst_sq_database_);
         //zip the file
@@ -254,8 +281,8 @@ bool client_handler::prepare_db(
         std::cout << c_time_ <<" ["<< providerid_<<"] TOTAL LOADING TIME: " << final <<" TICKS AND " \
                 << (((float)final)/CLOCKS_PER_SEC) << " SECONDS" << std::endl;
     } catch (std::exception& e) {
-        std::cerr << "[CM - PrepareDB] - " << e.what() << std::endl;
-        return false;
+        std::cerr << "[CM - PrepareDB] - Exception :: " << e.what() << std::endl;
+       return false;
     } catch (...) {
         std::cerr << "[CM - PrepareDB] - UNKNOWN ERROR" << std::endl;
         return false;
@@ -308,7 +335,7 @@ int client_handler::session() {
             //TODO: Verify providerid
             providers_db_ = pg_->get_providers_db(providerid_);
 
-            std::cout << c_time_ << "User -> " << providerid_ << " db -> " << providers_db_ <<std::endl;
+            std::cout << c_time_ << "User: [" << providerid_ << "] db: [" << providers_db_ <<"]"<<std::endl;
 
             //TODO: Need authentication code to check for valid request
 
@@ -338,7 +365,7 @@ int client_handler::session() {
             size_t write_n = boost::asio::write(*socket_, boost::asio::buffer(total_response.c_str(), total_response.length()));
 
             if (write_n != total_response.length()) { //check to see if correct amount of data is written back
-                std::cerr << c_time_ << " Failed to send data for  provider [" << providerid_ << "] " << std::endl;
+                std::cerr << c_time_ << "[CM] Failed to send data for  provider [" << providerid_ << "] " << std::endl;
                 client_status_ = e_status::ERROR;
             } else {
                 client_status_ = e_status::DONE;
@@ -346,8 +373,7 @@ int client_handler::session() {
             clean_client();
             break; //end the loop
         }
-    }
-    catch (std::exception& e)
+    } catch (std::exception& e)
     {
         std::cerr << c_time_ <<" [CM] Exception in thread: " << e.what() << "\n";
     }

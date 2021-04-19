@@ -72,6 +72,7 @@ sqlite_handler::sqlite_handler(const std::string& sq_database)
 
 sqlite_handler::~sqlite_handler() {
     //sqlite3_close(template_db_);
+    std::cout << c_time_ << "[SQ] CLOSING IN MEMORY DB " << std::endl;
     sqlite3_close(inmemorydb_);
 }
 
@@ -126,7 +127,8 @@ int sqlite_handler::insert_data(
         //const std::string& sq_database,
         const std::string& sq_table,
         const std::vector<std::string>& columns,
-        const std::vector<std::string>& data) {
+        const std::vector<std::string>& data,
+        pg_handler::table_status& status) {
     std::string sql = "";
     std::string base_sql = "INSERT INTO " + sq_table + " ( " +
             container_to_string(columns, ", ") + ") VALUES ";
@@ -162,9 +164,7 @@ int sqlite_handler::insert_data(
                 if((rc = sqlite3_step(stmt)) != SQLITE_DONE) {
                     std::cerr << c_time_ << "[SQ] TABLE " << sq_table<< " ERROR RC: ["<< rc << "] :: "<< sqlite3_errmsg(inmemorydb_) << " iteration: " << ++iteration <<std::endl;
                     std::cerr << " ================== " << std::endl << sql << std::endl<< "=============================" << std::endl;
-                }
-
-                else {
+                } else {
                     std::cout << c_time_ << "[SQ] TABLE " << sq_table<< " iteration: " << ++iteration << " row count: " << row_count <<std::endl;
 #ifdef DEBUG
                     std::cerr << " ================== " << std::endl << sql << std::endl<< "=============================" << std::endl;
@@ -185,10 +185,13 @@ int sqlite_handler::insert_data(
 #endif
                 }
                 sql = "";
+                //sqlite3_free(stmt);
             }
         }
         //fprintf(stdout, "SQLITE INSERT: Total %d Records created successfully for '%s' table\n", row_count, sq_table.c_str());
         std::cout << c_time_ << "[SQ] " << row_count << " Records created successfully for " << sq_table << std::endl;
+        //TODO do not use magic numbers
+        status = pg_handler::INSERTED; //inserted
 
 #ifdef DEBUG
         std::cout <<"INSERT SQL: " << sql << std::endl;
@@ -196,6 +199,8 @@ int sqlite_handler::insert_data(
 
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
+        //TODO do not use magic numbers
+        status = pg_handler::ERRORED; //ERRORED
         return SQLITE_ERROR;
     }
 

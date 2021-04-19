@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <string>
+#include "pg_handler.h"
 
 
 class sqlite3;
@@ -24,7 +25,8 @@ public:
             //const std::string& sq_database,
             const std::string& sq_table,
             const std::vector<std::string>& columns,
-            const std::vector<std::string>& data);
+            const std::vector<std::string>& data,
+            pg_handler::table_status& status);
     int select_data(std::vector<std::string>& column_names, std::vector<std::string>& result);
     int dump_db(const std::string& destination_db);
 

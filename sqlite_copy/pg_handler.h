@@ -17,7 +17,7 @@ class time_wrapper;
 class pg_handler {
 
 public:
-    enum table_status {NOT_READY=0, READY, INSERTED, ERRORED};
+    enum table_status {NOT_READY=0, READY, WRITING, INSERTED, ERRORED};
     pg_handler();
     int create_table(int argc, char* argv[]);
     int insert_data(int argc, char* argv[]);

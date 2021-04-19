@@ -215,7 +215,7 @@ const std::string pg_handler:: get_providers_db(const std::string _providerid) {
         pqxx::connection conn("dbname = RHIS_36 user = " + cm.user() + " password = "
                         + cm.password() + " hostaddr = " + cm.address() + " port = " + std::to_string(cm.db_port()));
         if (conn.is_open()) {
-            cout << "Opened database successfully: " << conn.dbname()<< "for provider: [" <<_providerid<<"]"<< endl;
+            cout <<c_time_ << "[PG] Opened database successfully: " << conn.dbname()<< " for provider: [" <<_providerid<<"]"<< endl;
         } else {
             cout << "Can't open database" << endl;
             return selected_db;
@@ -239,16 +239,15 @@ const std::string pg_handler:: get_providers_db(const std::string _providerid) {
 
         if(it != R.end()) {
             selected_db = it["db"].c_str();
-            //TODO: Temporary hack for Arafat
-            selected_db = "RHIS_36_71_DEV";
         } else {
             std::cout << "ERROR: provider do not exist" << std::endl;
             selected_db = "ERROR";
         }
 
     } catch (const std::exception &e) {
-        cerr <<"ERROR OCCURRED FOR SQL:\n" << sql << endl;
+        cerr <<c_time_<<"ERROR OCCURRED FOR SQL:\n" << sql << endl;
         cerr << e.what() << std::endl;
+        selected_db = "ERROR";
     }
     return selected_db;
 }
