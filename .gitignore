@@ -29,7 +29,8 @@ driver
 .project
 .cproject
 .settings/
-
+#VS code files
+.vscode/
 #backup
 .backup
 

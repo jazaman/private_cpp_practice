@@ -5,10 +5,19 @@ CFLAGS=-c -ansi -Wall -Werror -pedantic -std=c++0x
 NO_WARNING=-Wno-unused-variable
 TARGET=$(shell basename $(shell pwd)) #derive the executable name from hte directory
 
+ifndef $(DEBUG)
+	CXXFLAGS := ${CXXFLAGS} -DDESKTOP_TEST
+test:
+	$(info ************  TEST VERSION ************)
+else
+release:
+	$(info ************ RELEASE VERSIOIN **********)
+endif
+
 
 ifndef $(CC)
 	CC=g++
-else ifeq ($(TOOL),clang)
+else ifeq ($(CC),clang)
 	CC=clang++
 endif
 
@@ -37,4 +46,5 @@ $(TARGET):%:%.o
 all:$(TARGET)
 
 clean:
+	$(info *** CLEAN ***)
 	rm -rf *.o $(TARGET) 

@@ -1,4 +1,17 @@
+#include <boost/lambda/lambda.hpp>
 #include <iostream>
+#include <iterator>
+#include <algorithm>
+
+int main()
+{
+    using namespace boost::lambda;
+    typedef std::istream_iterator<int> in;
+
+    std::for_each(
+        in(std::cin), in(), std::cout << (_1 * 3) << " ");
+}
+/*#include <iostream>
 #include <boost/asio.hpp>
 
 using namespace boost::asio;
@@ -43,6 +56,7 @@ void client_manager::echo_loop() {
         std::cout << "Server received \'" << message <<"\'" << std::endl;
         send_(socket_, "-> " + message);
     }
+    socket_.close();
 }
 string client_manager::read_(tcp::socket &socket) {
     boost::asio::streambuf buf;
@@ -60,12 +74,12 @@ void client_manager::send_(tcp::socket & socket, const string &&message) {
     cout << "Servent sent back \'"<< message <<"\' to Client!" << endl;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     boost::asio::io_service io_service;
 
     std::vector<client_manager> clients;
     //listen for new connection
-    tcp::acceptor acceptor_(io_service, tcp::endpoint(tcp::v4(), 1234 ));
+    tcp::acceptor acceptor_(io_service, tcp::endpoint(tcp::v4(), (argc == 1 ? 1234: std::stoi(argv[1]) )));
 
     //waiting for connection
     while((clients.size() < 3)) {
@@ -87,3 +101,4 @@ int main() {
 
     return 0;
 }
+*/
